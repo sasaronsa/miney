@@ -1,0 +1,19 @@
+services:
+  miney:
+    build: .
+    image: miney-app:latest
+    container_name: miney
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:////data/miney.db
+      - DATA_DIR=/data
+      - UPLOAD_DIR=/data/uploads
+    volumes:
+      - miney_data:/data
+
+volumes:
+  miney_data:

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Presupuestos') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <h1 class="text-2xl font-bold">{{ t('Presupuestos') }} <span class="text-muted text-lg font-medium">{{ '%02d' % month }}/{{ year }}</span></h1>
+  <div class="flex gap-2 text-sm">
+    <a href="/budgets?year={{ year if month > 1 else year - 1 }}&month={{ month - 1 if month > 1 else 12 }}" class="rounded-xl px-3.5 py-2 border font-medium" style="border-color: var(--border)">←</a>
+    <a href="/budgets?year={{ year if month < 12 else year + 1 }}&month={{ month + 1 if month < 12 else 1 }}" class="rounded-xl px-3.5 py-2 border font-medium" style="border-color: var(--border)">→</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-3">
+    {% for row in budget_rows %}
+    {% set b = row.budget %}
+    <div class="surface rounded-2xl p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5 text-sm">
+        <span class="font-medium flex items-center gap-2 min-w-0">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ row.category.color if row.category else '#898781' }}"></span>
+          <span class="truncate">{{ row.category.name if row.category else 'Categoría eliminada' }}</span>
+          {% if b.period.value == 'range' %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0" style="background: var(--accent-soft); color: var(--accent)">
+            {{ b.start_date | fecha }} → {{ b.end_date | fecha if b.end_date else '∞' }}
+          </span>
+          {% else %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0" style="background: var(--surface-2); color: var(--text-muted)">
+            {{ t('Mensual') }}{% if not b.end_date %} · ∞{% else %} · {{ t('hasta') }} {{ b.end_date | fecha }}{% endif %}
+          </span>
+          {% endif %}
+        </span>
+        <span class="text-secondary whitespace-nowrap">{{ row.spent_cents | eur }} / {{ b.amount_limit_cents | eur }}</span>
+      </div>
+      <div class="w-full h-2.5 rounded-full overflow-hidden" style="background: var(--gridline)">
+        <div class="progress-fill h-2.5 rounded-full" style="width: {{ row.pct }}%; background: {{ 'linear-gradient(90deg, var(--negative), var(--negative))' if row.over_budget else 'linear-gradient(90deg, var(--accent), var(--accent-2))' }}"></div>
+      </div>
+      <div class="flex items-center justify-between mt-2">
+        <span class="text-xs {{ '' if not row.over_budget else 'font-semibold' }}" style="color: {{ 'var(--negative)' if row.over_budget else 'var(--text-muted)' }}">
+          {{ row.real_pct }}% {{ t('usado') }}{% if row.over_budget %} · {{ t('excedido en') }} {{ (row.spent_cents - b.amount_limit_cents) | eur }}{% endif %}
+        </span>
+        <form method="post" action="/budgets/{{ b.id }}/delete">
+          <input type="hidden" name="year" value="{{ year }}" />
+          <input type="hidden" name="month" value="{{ month }}" />
+          <button type="submit" class="text-xs" style="color: var(--negative)">{{ t('Eliminar') }}</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="surface rounded-2xl p-8 text-center text-secondary">
+      {{ t('Sin presupuestos activos en este mes. Crea uno indefinido y se aplicará automáticamente cada mes.') }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="surface rounded-2xl p-5 h-fit" x-data="{ period: 'monthly' }">
+    <h2 class="font-semibold mb-1">{{ t('Nuevo presupuesto') }}</h2>
+    <p class="text-xs text-muted mb-4">{{ t('Los mensuales se repiten solos cada mes mientras estén vigentes — sin fecha fin, para siempre.') }}</p>
+    <form method="post" action="/budgets/new" class="space-y-3 text-sm">
+      <input type="hidden" name="year" value="{{ year }}" />
+      <input type="hidden" name="month" value="{{ month }}" />
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Categoría') }}</label>
+        <select name="category_id" required class="w-full px-3.5 py-2.5">
+          {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Límite (€)') }}</label>
+        <input name="amount_limit" required placeholder="200,00" class="w-full px-3.5 py-2.5" />
+      </div>
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Tipo de periodo') }}</label>
+        <select name="period" x-model="period" class="w-full px-3.5 py-2.5">
+          <option value="monthly">{{ t('Mensual recurrente (límite por mes)') }}</option>
+          <option value="range">{{ t('Rango de fechas (límite total del rango)') }}</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block mb-1.5 text-secondary font-medium">{{ t('Desde') }}</label>
+          <input type="date" name="start_date" required value="{{ '%04d-%02d-01' % (year, month) }}" class="w-full min-w-0 px-3.5 py-2.5" />
+        </div>
+        <div>
+          <label class="block mb-1.5 text-secondary font-medium">{{ t('Hasta') }}</label>
+          <input type="date" name="end_date" class="w-full min-w-0 px-3.5 py-2.5" />
+        </div>
+      </div>
+      <p class="text-xs text-muted" x-show="period === 'monthly'">{{ t('Deja \"Hasta\" vacío para que el presupuesto sea indefinido.') }}</p>
+      <p class="text-xs text-muted" x-show="period === 'range'" x-cloak>{{ t('El límite se aplica al total gastado entre las dos fechas (ej: unas vacaciones).') }}</p>
+      <button type="submit" class="brand-btn rounded-xl px-4 py-2.5 font-semibold w-full">{{ t('Crear presupuesto') }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

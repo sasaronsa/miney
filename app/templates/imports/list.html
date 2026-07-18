@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Importaciones') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">{{ t('Importaciones') }}</h1>
+  <a href="/imports/new" class="brand-btn rounded-lg px-4 py-2 text-sm font-semibold">{{ t('+ Nueva importación') }}</a>
+</div>
+
+<div class="surface rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-muted border-b" style="border-color: var(--border)">
+          <th class="py-3 px-4">{{ t('Fecha') }}</th>
+          <th class="py-3 px-4">{{ t('Fichero') }}</th>
+          <th class="py-3 px-4">{{ t('Cuenta') }}</th>
+          <th class="py-3 px-4">{{ t('Origen') }}</th>
+          <th class="py-3 px-4 text-right">{{ t('Total filas') }}</th>
+          <th class="py-3 px-4 text-right">{{ t('Duplicados') }}</th>
+          <th class="py-3 px-4 text-right">{{ t('Insertados') }}</th>
+          <th class="py-3 px-4"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in batches %}
+        <tr class="border-b {{ 'opacity-50' if b.status.value == 'undone' else '' }}" style="border-color: var(--border)">
+          <td class="py-2.5 px-4 whitespace-nowrap">{{ b.imported_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="py-2.5 px-4">{{ b.filename }}</td>
+          <td class="py-2.5 px-4">{{ accounts[b.account_id].name if b.account_id in accounts else '—' }}</td>
+          <td class="py-2.5 px-4 text-secondary">{{ b.source.value }}</td>
+          <td class="py-2.5 px-4 text-right">{{ b.total_rows }}</td>
+          <td class="py-2.5 px-4 text-right">{{ b.duplicate_rows }}</td>
+          <td class="py-2.5 px-4 text-right font-medium">{{ b.inserted_rows }}</td>
+          <td class="py-2.5 px-4 text-right whitespace-nowrap">
+            {% if b.status.value == 'undone' %}
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: var(--surface-2); color: var(--text-muted)">{{ t('Deshecha') }}</span>
+            {% elif b.inserted_rows > 0 %}
+            <form method="post" action="/imports/{{ b.id }}/undo"
+                  onsubmit="return confirm('¿Deshacer esta importación? Se eliminarán los {{ b.inserted_rows }} movimientos que insertó.');">
+              <button type="submit" class="text-xs font-medium" style="color: var(--negative)">{{ t('Deshacer') }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="py-8 text-center text-secondary">{{ t('Todavía no se ha importado ningún fichero.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

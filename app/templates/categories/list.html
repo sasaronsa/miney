@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Categorías') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ t('Categorías') }}</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 surface rounded-2xl p-5">
+    <h2 class="font-semibold mb-4">{{ t('Jerarquía') }}</h2>
+    {% macro render_node(node) %}
+      <div class="py-2 flex items-center justify-between border-b" style="border-color: var(--border)">
+        <span class="flex items-center gap-2 text-sm">
+          <span class="w-2.5 h-2.5 rounded-full" style="background: {{ node.category.color }}"></span>
+          {% if node.category.icon %}{{ node.category.icon }}{% endif %}
+          {{ node.category.name }}
+        </span>
+        <form method="post" action="/categories/{{ node.category.id }}/delete" onsubmit="return confirm('¿Eliminar esta categoría? Los movimientos pasarán a Sin categorizar.');">
+          <button type="submit" class="text-xs" style="color: var(--status-critical)">{{ t('Eliminar') }}</button>
+        </form>
+      </div>
+      {% if node.children %}
+      <div class="pl-6">
+        {% for child in node.children %}
+          {{ render_node(child) }}
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endmacro %}
+
+    {% for node in tree %}
+      {{ render_node(node) }}
+    {% else %}
+      <p class="text-secondary text-sm">{{ t('Todavía no hay categorías.') }}</p>
+    {% endfor %}
+  </div>
+
+  <div class="surface rounded-2xl p-5 h-fit">
+    <h2 class="font-semibold mb-4">{{ t('Nueva categoría') }}</h2>
+    <form method="post" action="/categories/new" class="space-y-3 text-sm">
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Nombre') }}</label>
+        <input name="name" required class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+      </div>
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Categoría padre (opcional)') }}</label>
+        <select name="parent_id" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+          <option value="">{{ t('— Categoría de nivel superior —') }}</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block mb-1 text-secondary">{{ t('Color') }}</label>
+          <input type="color" name="color" value="#2a78d6" class="w-full h-10 rounded-lg border bg-transparent" style="border-color: var(--border)" />
+        </div>
+        <div>
+          <label class="block mb-1 text-secondary">{{ t('Icono (emoji)') }}</label>
+          <input name="icon" maxlength="4" placeholder="🛒" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+        </div>
+      </div>
+      <button type="submit" class="brand-btn rounded-lg px-4 py-2 text-sm font-semibold w-full">{{ t('Crear categoría') }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

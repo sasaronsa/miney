@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Editar cuenta') if account else t('Nueva cuenta') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ t('Editar cuenta') if account else t('Nueva cuenta') }}</h1>
+
+<form method="post" action="{{ '/accounts/' ~ account.id ~ '/edit' if account else '/accounts/new' }}"
+      class="surface rounded-2xl p-6 max-w-lg space-y-4">
+  <div>
+    <label class="block text-sm mb-1 text-secondary">{{ t('Nombre') }}</label>
+    <input name="name" required value="{{ account.name if account else '' }}"
+           class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Tipo') }}</label>
+      <select name="account_type" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+        {% for tx in account_types %}
+        <option value="{{ tx.value }}" {{ 'selected' if account and account.account_type == t else '' }}>{{ tx.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Banco') }}</label>
+      <input name="bank" value="{{ account.bank if account and account.bank else '' }}"
+             class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm mb-1 text-secondary">{{ t('IBAN (opcional)') }}</label>
+    <input name="iban" value="{{ account.iban if account and account.iban else '' }}"
+           class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Saldo inicial (€)') }}</label>
+      <input name="initial_balance" value="{{ '%.2f' % (account.initial_balance_cents / 100) if account else '0.00' }}"
+             class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+    </div>
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Color') }}</label>
+      <input type="color" name="color" value="{{ account.color if account else '#2a78d6' }}"
+             class="w-full h-10 rounded-lg border bg-transparent" style="border-color: var(--border)" />
+    </div>
+  </div>
+
+  {% if account %}
+  <label class="flex items-center gap-2 text-sm text-secondary">
+    <input type="checkbox" name="is_active" value="true" {{ 'checked' if account.is_active else '' }} />
+    {{ t('Cuenta activa') }}
+  </label>
+  {% endif %}
+
+  <div class="flex gap-3 pt-2">
+    <button type="submit" class="brand-btn rounded-lg px-4 py-2 text-sm font-semibold">{{ t('Guardar') }}</button>
+    <a href="/accounts" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--border)">{{ t('Cancelar') }}</a>
+  </div>
+</form>
+{% endblock %}

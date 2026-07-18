@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Ajustes') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ t('Ajustes') }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl">
+  <div class="surface rounded-2xl p-5 h-fit">
+    <h2 class="font-semibold mb-4">{{ t('Perfil') }}</h2>
+    <form method="post" action="/settings/profile" class="space-y-3 text-sm">
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Nombre de usuario') }}</label>
+        <input name="username" required value="{{ profile.username if profile else '' }}" class="w-full px-3.5 py-2.5" />
+      </div>
+      <button type="submit" class="brand-btn rounded-xl px-4 py-2.5 font-semibold">{{ t('Guardar') }}</button>
+    </form>
+  </div>
+
+  <div class="surface rounded-2xl p-5 h-fit">
+    <h2 class="font-semibold mb-4">{{ t('Idioma de la interfaz') }}</h2>
+    <form method="post" action="/settings/language" class="space-y-3 text-sm">
+      <select name="language" class="w-full px-3.5 py-2.5">
+        {% for code, name in languages.items() %}
+        <option value="{{ code }}" {{ 'selected' if profile and profile.language == code else '' }}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="brand-btn rounded-xl px-4 py-2.5 font-semibold">{{ t('Guardar') }}</button>
+    </form>
+  </div>
+
+  <div class="surface rounded-2xl p-5 md:col-span-2">
+    <h2 class="font-semibold mb-4">{{ t('Cambiar contraseña') }}</h2>
+    {% if password_error %}
+    <div class="mb-4 rounded-xl px-4 py-3 text-sm font-medium"
+         style="background: color-mix(in srgb, var(--negative) 12%, transparent); color: var(--negative); border: 1px solid color-mix(in srgb, var(--negative) 35%, transparent)">
+      {{ password_error }}
+    </div>
+    {% endif %}
+    <form method="post" action="/settings/password" class="grid sm:grid-cols-3 gap-3 text-sm items-end">
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Contraseña actual') }}</label>
+        <input type="password" name="current_password" required autocomplete="current-password" class="w-full px-3.5 py-2.5" />
+      </div>
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Nueva contraseña') }}</label>
+        <input type="password" name="new_password" required minlength="4" autocomplete="new-password" class="w-full px-3.5 py-2.5" />
+      </div>
+      <div>
+        <label class="block mb-1.5 text-secondary font-medium">{{ t('Repite la contraseña') }}</label>
+        <input type="password" name="password_confirm" required minlength="4" autocomplete="new-password" class="w-full px-3.5 py-2.5" />
+      </div>
+      <div class="sm:col-span-3">
+        <button type="submit" class="brand-btn rounded-xl px-4 py-2.5 font-semibold">{{ t('Cambiar contraseña') }}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="surface rounded-2xl p-5 md:col-span-2">
+    <h2 class="font-semibold mb-4">{{ t('Sesión') }}</h2>
+    <form method="post" action="/logout">
+      <button type="submit" class="rounded-xl px-4 py-2.5 font-semibold text-sm border"
+              style="border-color: var(--negative); color: var(--negative)">
+        {{ t('Cerrar sesión') }}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

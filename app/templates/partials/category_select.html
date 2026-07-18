@@ -1,0 +1,14 @@
+<select
+  hx-post="/transactions/{{ transaction.id }}/quick-category"
+  hx-target="#cat-select-{{ transaction.id }}"
+  hx-swap="innerHTML"
+  hx-trigger="change"
+  name="quick_category_id"
+  class="rounded-lg border px-2 py-1.5 bg-transparent text-xs"
+  style="border-color: var(--border)"
+>
+  <option value="">{{ t('Sin categorizar') }}</option>
+  {% for c in categories %}
+  <option value="{{ c.id }}" {{ 'selected' if transaction.category_id == c.id else '' }}>{{ c.name }}</option>
+  {% endfor %}
+</select>

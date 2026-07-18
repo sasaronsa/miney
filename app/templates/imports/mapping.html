@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Mapeo de columnas') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">{{ t('Mapeo de columnas') }}</h1>
+<p class="text-secondary text-sm mb-6">{{ t('Paso 2 de 3 — Indica qué columna de tu fichero corresponde a cada campo. Fichero:') }} <strong>{{ filename }}</strong></p>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <form method="post" action="/imports/preview" class="surface rounded-2xl p-6 space-y-4 text-sm">
+    <input type="hidden" name="upload_id" value="{{ upload_id }}" />
+    <input type="hidden" name="account_id" value="{{ account_id }}" />
+    <input type="hidden" name="filename" value="{{ filename }}" />
+    <input type="hidden" name="source" value="{{ source }}" />
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Columna fecha') }}</label>
+        <select name="date_column" required class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+          {% for col in columns %}
+          <option value="{{ col }}" {{ 'selected' if template and template.date_column == col else '' }}>{{ col }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Formato de fecha') }}</label>
+        <input name="date_format" value="{{ template.date_format if template else '%d/%m/%Y' }}"
+               class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block mb-1 text-secondary">{{ t('Columna descripción / concepto') }}</label>
+      <select name="description_column" required class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+        {% for col in columns %}
+        <option value="{{ col }}" {{ 'selected' if template and template.description_column == col else '' }}>{{ col }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="rounded-lg border p-3" style="border-color: var(--border)">
+      <p class="text-xs text-muted mb-2">{{ t('O bien un único importe con signo, o bien columnas separadas de cargo/abono:') }}</p>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block mb-1 text-secondary text-xs">{{ t('Importe (con signo)') }}</label>
+          <select name="amount_column" class="w-full rounded-lg border px-2 py-1.5 bg-transparent text-xs" style="border-color: var(--border)">
+            <option value="">—</option>
+            {% for col in columns %}
+            <option value="{{ col }}" {{ 'selected' if template and template.amount_column == col else '' }}>{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1 text-secondary text-xs">{{ t('Cargo / débito') }}</label>
+          <select name="debit_column" class="w-full rounded-lg border px-2 py-1.5 bg-transparent text-xs" style="border-color: var(--border)">
+            <option value="">—</option>
+            {% for col in columns %}
+            <option value="{{ col }}" {{ 'selected' if template and template.debit_column == col else '' }}>{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1 text-secondary text-xs">{{ t('Abono / crédito') }}</label>
+          <select name="credit_column" class="w-full rounded-lg border px-2 py-1.5 bg-transparent text-xs" style="border-color: var(--border)">
+            <option value="">—</option>
+            {% for col in columns %}
+            <option value="{{ col }}" {{ 'selected' if template and template.credit_column == col else '' }}>{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('ID externo (opcional)') }}</label>
+        <select name="external_id_column" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+          <option value="">—</option>
+          {% for col in columns %}
+          <option value="{{ col }}" {{ 'selected' if template and template.external_id_column == col else '' }}>{{ col }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Separador decimal') }}</label>
+        <input name="decimal_separator" value="{{ template.decimal_separator if template else ',' }}"
+               class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+      </div>
+      <div>
+        <label class="block mb-1 text-secondary">{{ t('Separador de miles') }}</label>
+        <input name="thousands_separator" value="{{ template.thousands_separator if template else '.' }}"
+               class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+      </div>
+    </div>
+
+    <div class="border-t pt-4" style="border-color: var(--border)">
+      <label class="flex items-center gap-2 mb-2">
+        <input type="checkbox" name="save_template" value="true" />
+        {{ t('Guardar este mapeo como plantilla reutilizable') }}
+      </label>
+      <input name="template_name" placeholder="Nombre de la plantilla (ej: BBVA cuenta corriente)"
+             class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+    </div>
+
+    <button type="submit" class="brand-btn rounded-lg px-4 py-2 text-sm font-semibold">{{ t('Ver vista previa →') }}</button>
+  </form>
+
+  <div class="surface rounded-2xl p-5">
+    <h2 class="font-semibold mb-3 text-sm">{{ t('Muestra del fichero') }} ({{ sample_rows | length }})</h2>
+    <div class="overflow-x-auto">
+      <table class="text-xs w-full">
+        <thead>
+          <tr class="text-left text-muted border-b" style="border-color: var(--border)">
+            {% for col in columns %}<th class="py-1.5 pr-3 whitespace-nowrap">{{ col }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sample_rows %}
+          <tr class="border-b" style="border-color: var(--border)">
+            {% for col in columns %}<td class="py-1.5 pr-3 whitespace-nowrap">{{ row[col] }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

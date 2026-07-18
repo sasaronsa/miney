@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Suscripciones') }} · {{ app_name }}{% endblock %}
+
+{% macro price_badge(label, pct) %}
+  {% if label == 'subida' %}
+  <span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+        style="background: color-mix(in srgb, var(--negative) 14%, transparent); color: var(--negative)">▲ {{ t('Subida') }} {{ '+' if pct > 0 }}{{ pct }}%</span>
+  {% elif label == 'bajada' %}
+  <span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+        style="background: color-mix(in srgb, var(--positive) 14%, transparent); color: var(--positive)">▼ {{ t('Bajada') }} {{ pct }}%</span>
+  {% elif label == 'variacion' %}
+  <span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+        style="background: color-mix(in srgb, var(--status-warning) 16%, transparent); color: var(--status-warning)">≈ {{ t('Varía') }} {{ '+' if pct > 0 }}{{ pct }}%</span>
+  {% elif label == 'estable' %}
+  <span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+        style="background: var(--surface-2); color: var(--text-muted)">{{ t('Estable') }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <h1 class="text-2xl font-bold">{{ t('Suscripciones') }}</h1>
+  <a href="/subscriptions/new" class="brand-btn rounded-xl px-4 py-2 text-sm font-semibold">{{ t('+ Nueva') }}</a>
+</div>
+
+<div class="rounded-3xl p-5 md:p-6 mb-6 text-white relative overflow-hidden"
+     style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 16px 40px -16px var(--accent)">
+  <span class="absolute -top-10 -right-10 w-44 h-44 rounded-full" style="background: rgba(255,255,255,0.12)"></span>
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium opacity-80">{{ t('Gasto mensual en suscripciones') }} · {{ active_count }} {{ t('activas') }}</p>
+      <p class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">{{ monthly_total_cents | eur }}</p>
+    </div>
+    <p class="text-sm opacity-80">≈ {{ yearly_total_cents | eur }} {{ t('al año') }}</p>
+  </div>
+</div>
+
+{% if stats %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+  {% for s in stats %}
+  {% set sub = s.subscription %}
+  <div class="surface rounded-2xl p-5 {{ 'opacity-60' if s.status == 'finalizada' else '' }}">
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden"
+              style="background: var(--accent-soft); color: var(--accent)">
+          {% if sub.website %}
+          <img src="https://www.google.com/s2/favicons?domain={{ sub.website | urlencode }}&sz=64" alt=""
+               class="w-6 h-6" onerror="this.remove()" loading="lazy" />
+          {% else %}
+          {{ sub.name[0] | upper }}
+          {% endif %}
+        </span>
+        <div class="min-w-0">
+          <p class="font-semibold truncate">{{ sub.name }}</p>
+          {% if sub.website %}
+          <a href="{{ sub.website }}" target="_blank" rel="noopener" class="text-xs truncate block" style="color: var(--accent)">
+            {{ sub.website | replace('https://','') | replace('http://','') }}
+          </a>
+          {% else %}
+          <p class="text-xs text-muted truncate">"{{ sub.match_pattern }}"</p>
+          {% endif %}
+        </div>
+      </div>
+      {% if s.status == 'finalizada' %}
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--surface-2); color: var(--text-muted)">{{ t('Finalizada') }}</span>
+      {% elif s.status == 'sin_cargos' %}
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: color-mix(in srgb, var(--status-warning) 16%, transparent); color: var(--status-warning)">{{ t('Sin cargos recientes') }}</span>
+      {% else %}
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: color-mix(in srgb, var(--positive) 14%, transparent); color: var(--positive)">{{ t('Activa') }}</span>
+      {% endif %}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span class="text-2xl font-bold">{{ s.display_amount_cents | eur }}</span>
+      <span class="text-xs text-muted">/ {{ t({'weekly':'semana','monthly':'mes','yearly':'año','other':'cargo'}[sub.frequency.value]) }}</span>
+      {% if s.price_label %}{{ price_badge(s.price_label, s.change_pct) }}{% endif %}
+    </div>
+
+    {% if s.amounts_series | length >= 3 %}
+    <div class="h-12 mb-3 -mx-1">
+      <canvas class="spark" data-series='{{ s.amounts_series | tojson }}'></canvas>
+    </div>
+    {% endif %}
+
+    <div class="text-xs text-muted space-y-1 mb-4">
+      <p>
+        {% if sub.start_date %}Desde {{ sub.start_date | fecha }}{% endif %}
+        {% if sub.end_date %} · hasta {{ sub.end_date | fecha }}{% endif %}
+        {% if not sub.start_date and not sub.end_date and s.last_date %}Último cargo: {{ s.last_date | fecha }}{% endif %}
+      </p>
+      {% if s.next_estimate and s.status == 'activa' %}
+      <p>{{ t('Próximo cargo estimado:') }} <span class="font-medium" style="color: var(--text-secondary)">{{ s.next_estimate | fecha }}</span></p>
+      {% endif %}
+      {% if s.tx_count %}<p>{{ s.tx_count }} {{ t('cargos vinculados') }}{% if s.prev_median_cents %} · {{ t('antes') }} {{ s.prev_median_cents | eur }}{% endif %}</p>{% endif %}
+      {% if sub.notes %}<p class="italic">{{ sub.notes }}</p>{% endif %}
+    </div>
+
+    <div class="flex items-center gap-4 text-sm">
+      <a href="/subscriptions/{{ sub.id }}/edit" class="font-medium" style="color: var(--accent)">{{ t('Editar') }}</a>
+      <a href="/transactions?q={{ sub.match_pattern | urlencode }}" class="font-medium text-secondary">{{ t('Ver cargos') }}</a>
+      <form method="post" action="/subscriptions/{{ sub.id }}/delete" class="ml-auto"
+            onsubmit="return confirm('¿Eliminar esta suscripción? (no borra los movimientos)');">
+        <button type="submit" class="text-xs" style="color: var(--negative)">{{ t('Eliminar') }}</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="surface rounded-2xl p-8 text-center text-secondary mb-8">
+  {{ t('Aún no tienes suscripciones guardadas. Añádelas manualmente o desde las detectadas automáticamente.') }}
+</div>
+{% endif %}
+
+<h2 class="text-lg font-bold mb-1">{{ t('Detectadas automáticamente') }}</h2>
+<p class="text-sm text-muted mb-4">{{ t('Gastos con patrón periódico que todavía no tienes registrados como suscripción.') }}</p>
+
+{% if detected %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% for r in detected %}
+  <div class="surface rounded-2xl p-4 flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <p class="font-medium capitalize truncate">{{ r.description }}</p>
+      <div class="flex flex-wrap items-center gap-2 mt-1.5">
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--accent-soft); color: var(--accent)">{{ t(r.frequency) }}</span>
+        {{ price_badge(r.price_label, r.change_pct) }}
+        {% if r.possibly_cancelled %}
+        <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--surface-2); color: var(--text-muted)">{{ t('¿Cancelada?') }}</span>
+        {% endif %}
+      </div>
+      <p class="text-xs text-muted mt-1.5">{{ r.last_amount_cents | eur }} · {{ t('último') }} {{ r.last_date | fecha }} · ×{{ r.occurrences }}</p>
+    </div>
+    <a href="/subscriptions/new?name={{ r.pattern | urlencode }}&pattern={{ r.pattern | urlencode }}&amount={{ '%.2f' % (r.last_amount_cents / 100) }}&frequency={{ r.frequency_value }}"
+       class="brand-btn rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0">{{ t('+ Añadir') }}</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="surface rounded-2xl p-6 text-center text-secondary text-sm">
+  {{ t('Nada nuevo que añadir: todos los gastos recurrentes detectados ya están registrados. 🎉') }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const style = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim();
+  const surface = style.getPropertyValue('--surface-2').trim();
+
+  document.querySelectorAll('canvas.spark').forEach((canvas) => {
+    const series = JSON.parse(canvas.dataset.series);
+    const last = series.length - 1;
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: series.map(p => p.date),
+        datasets: [{
+          data: series.map(p => p.amount_cents / 100),
+          borderColor: accent,
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false,
+          pointRadius: (ctx) => ctx.dataIndex === last ? 3 : 0,
+          pointBackgroundColor: accent,
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: surface,
+            titleColor: style.getPropertyValue('--text-primary').trim(),
+            bodyColor: style.getPropertyValue('--text-secondary').trim(),
+            cornerRadius: 10,
+            padding: 8,
+            displayColors: false,
+            callbacks: { label: (c) => c.parsed.y.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €' },
+          },
+        },
+        scales: { x: { display: false }, y: { display: false } },
+      }
+    });
+  });
+</script>
+{% endblock %}

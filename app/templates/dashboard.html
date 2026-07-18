@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Resumen') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-7">
+  <p class="text-sm text-muted font-medium">{{ t('Patrimonio total') }}</p>
+  <p class="text-4xl md:text-5xl font-extrabold tracking-tight gradient-text mt-1">{{ total_balance_cents | eur }}</p>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+  <div class="surface rounded-2xl p-5">
+    <div class="flex items-center gap-2.5 mb-2">
+      <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--accent-soft); color: var(--accent)">
+        <svg class="w-4.5 h-4.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
+      </span>
+      <p class="text-xs text-muted font-semibold uppercase tracking-wide">{{ t('Ahorro mes') }}</p>
+    </div>
+    <p class="text-xl md:text-2xl font-bold" style="color: {{ 'var(--positive)' if (savings_rate_month or 0) >= 0 else 'var(--negative)' }}">
+      {% if savings_rate_month is not none %}{{ savings_rate_month }}%{% else %}—{% endif %}
+    </p>
+  </div>
+
+  {% set current = cashflow[-1] if cashflow else None %}
+  <div class="surface rounded-2xl p-5">
+    <div class="flex items-center gap-2.5 mb-2">
+      <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: color-mix(in srgb, var(--positive) 14%, transparent); color: var(--positive)">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75"/></svg>
+      </span>
+      <p class="text-xs text-muted font-semibold uppercase tracking-wide">{{ t('Ingresos') }} {{ current_month_label }}</p>
+    </div>
+    <p class="text-xl md:text-2xl font-bold" style="color: var(--positive)">{{ (current.income_cents if current else 0) | eur }}</p>
+  </div>
+
+  <div class="surface rounded-2xl p-5 col-span-2 lg:col-span-1">
+    <div class="flex items-center gap-2.5 mb-2">
+      <span class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: color-mix(in srgb, var(--negative) 14%, transparent); color: var(--negative)">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75"/></svg>
+      </span>
+      <p class="text-xs text-muted font-semibold uppercase tracking-wide">{{ t('Gastos') }} {{ current_month_label }}</p>
+    </div>
+    <p class="text-xl md:text-2xl font-bold" style="color: var(--negative)">{{ (current.expense_cents if current else 0) | eur }}</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+  <div class="surface rounded-2xl p-5 lg:col-span-2">
+    <h2 class="font-semibold mb-4">{{ t('Evolución del saldo') }}</h2>
+    <div class="h-64"><canvas id="balanceChart"></canvas></div>
+  </div>
+  <div class="surface rounded-2xl p-5">
+    <h2 class="font-semibold mb-4">{{ t('Ingresos vs gastos') }}</h2>
+    <div class="h-64"><canvas id="cashflowChart"></canvas></div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+  <div class="surface rounded-2xl p-5">
+    <h2 class="font-semibold mb-4">{{ t('Gasto por categoría — este mes') }}</h2>
+    {% if expenses_month %}
+    <div class="h-64"><canvas id="categoryChart"></canvas></div>
+    {% else %}
+    <p class="text-secondary text-sm">{{ t('Sin gastos registrados este mes.') }}</p>
+    {% endif %}
+  </div>
+
+  <div class="surface rounded-2xl p-5">
+    <h2 class="font-semibold mb-4">{{ t('Top comercios — este mes') }}</h2>
+    {% if top_merchants %}
+    <ul>
+      {% for m in top_merchants %}
+      <li class="flex items-center justify-between py-2.5 text-sm {{ 'border-t' if not loop.first }}" style="border-color: var(--border)">
+        <span class="flex items-center gap-3 min-w-0">
+          <span class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                style="background: var(--accent-soft); color: var(--accent)">{{ loop.index }}</span>
+          <span class="capitalize truncate">{{ m.description }} <span class="text-muted font-normal">×{{ m.count }}</span></span>
+        </span>
+        <span class="font-semibold whitespace-nowrap pl-3">{{ m.total_cents | eur }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-secondary text-sm">{{ t('Sin movimientos suficientes.') }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="surface rounded-2xl p-5">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+    <h2 class="font-semibold">{{ t('Pagos recurrentes detectados') }}</h2>
+    <a href="/subscriptions" class="text-sm font-medium" style="color: var(--accent)">{{ t('Gestionar suscripciones →') }}</a>
+  </div>
+  {% if recurring_items %}
+  <ul>
+    {% for r in recurring_items %}
+    <li class="py-3 {{ 'border-t' if not loop.first }}" style="border-color: var(--border)">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-medium capitalize truncate">{{ r.description }}</p>
+          <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: var(--accent-soft); color: var(--accent)">{{ t(r.frequency) }}</span>
+            {% if r.price_label == 'subida' %}
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: color-mix(in srgb, var(--negative) 14%, transparent); color: var(--negative)">▲ {{ t('Subida') }} +{{ r.change_pct }}%</span>
+            {% elif r.price_label == 'bajada' %}
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: color-mix(in srgb, var(--positive) 14%, transparent); color: var(--positive)">▼ {{ t('Bajada') }} {{ r.change_pct }}%</span>
+            {% elif r.price_label == 'variacion' %}
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: color-mix(in srgb, var(--status-warning) 16%, transparent); color: var(--status-warning)">≈ {{ t('Varía') }}</span>
+            {% endif %}
+            {% if r.possibly_cancelled %}
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background: var(--surface-2); color: var(--text-muted)">{{ t('¿Cancelada?') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="font-semibold" style="color: var(--negative)">{{ r.last_amount_cents | eur }}</p>
+          <p class="text-xs text-muted">{{ r.last_date | fecha }} · ×{{ r.occurrences }}</p>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-secondary text-sm">{{ t('Aún no se han detectado patrones recurrentes (se necesitan al menos 3 movimientos similares).') }}</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const style = getComputedStyle(document.documentElement);
+  const cssVar = (name) => style.getPropertyValue(name).trim();
+
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  Chart.defaults.color = cssVar('--text-muted');
+  Chart.defaults.plugins.tooltip.backgroundColor = cssVar('--surface-2');
+  Chart.defaults.plugins.tooltip.titleColor = cssVar('--text-primary');
+  Chart.defaults.plugins.tooltip.bodyColor = cssVar('--text-secondary');
+  Chart.defaults.plugins.tooltip.borderColor = cssVar('--border-strong');
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.cornerRadius = 12;
+  Chart.defaults.plugins.tooltip.padding = 12;
+  Chart.defaults.plugins.tooltip.displayColors = false;
+
+  const gridColor = cssVar('--gridline');
+  const accent = cssVar('--accent');
+  const eur = (v) => v.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
+
+  const balanceSeries = {{ total_series | tojson }};
+  const balCtx = document.getElementById('balanceChart').getContext('2d');
+  const balGrad = balCtx.createLinearGradient(0, 0, 0, 260);
+  balGrad.addColorStop(0, accent + '4d');
+  balGrad.addColorStop(1, accent + '00');
+
+  new Chart(balCtx, {
+    type: 'line',
+    data: {
+      labels: balanceSeries.map(p => p.date),
+      datasets: [{
+        label: 'Saldo total',
+        data: balanceSeries.map(p => p.balance_cents / 100),
+        borderColor: accent,
+        backgroundColor: balGrad,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: accent,
+        pointHoverBorderColor: cssVar('--surface-1'),
+        pointHoverBorderWidth: 2,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
+        y: { grid: { color: gridColor }, border: { display: false }, ticks: { callback: eur, maxTicksLimit: 6 } },
+      }
+    }
+  });
+
+  const cashflow = {{ cashflow | tojson }};
+  new Chart(document.getElementById('cashflowChart'), {
+    type: 'bar',
+    data: {
+      labels: cashflow.map(p => p.label),
+      datasets: [
+        { label: '{{ t('Ingresos') }}', data: cashflow.map(p => p.income_cents / 100), backgroundColor: cssVar('--positive'), borderRadius: 6, maxBarThickness: 14 },
+        { label: '{{ t('Gastos') }}', data: cashflow.map(p => p.expense_cents / 100), backgroundColor: cssVar('--negative'), borderRadius: 6, maxBarThickness: 14 },
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxHeight: 7 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
+        y: { grid: { color: gridColor }, border: { display: false }, ticks: { callback: eur, maxTicksLimit: 5 } },
+      }
+    }
+  });
+
+  const expensesMonth = {{ expenses_month | tojson }};
+  if (expensesMonth.length) {
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'bar',
+      data: {
+        labels: expensesMonth.map(c => c.category_name),
+        datasets: [{
+          data: expensesMonth.map(c => c.total_cents / 100),
+          backgroundColor: expensesMonth.map(c => c.color || accent),
+          borderRadius: 6,
+          maxBarThickness: 18,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: gridColor }, border: { display: false }, ticks: { callback: eur, maxTicksLimit: 6 } },
+          y: { grid: { display: false } },
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

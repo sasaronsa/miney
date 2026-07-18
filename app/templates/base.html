@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('miney-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+      if (localStorage.getItem('miney-demo') === '1') {
+        document.documentElement.classList.add('demo');
+      }
+    })();
+  </script>
+  <link rel="manifest" href="/static/manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0b11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="{{ app_name }}" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root, [data-theme="light"] {
+      color-scheme: light;
+      --surface-page: #f4f4f8;
+      --surface-1: #ffffff;
+      --surface-2: #f6f6fa;
+      --field: #ffffff;
+      --text-primary: #101017;
+      --text-secondary: #4c4c5c;
+      --text-muted: #8b8b9c;
+      --border: rgba(16,16,26,0.08);
+      --border-strong: rgba(16,16,26,0.16);
+      --gridline: #e8e8f0;
+      --baseline: #cfcfdd;
+
+      --accent: #4f46e5;
+      --accent-2: #2563eb;
+      --accent-soft: rgba(79,70,229,0.12);
+      --brand: #4f46e5;
+      --positive: #0e9f6e;
+      --negative: #e11d48;
+
+      --series-1: #2a78d6;
+      --series-2: #1baf7a;
+      --series-3: #eda100;
+      --series-4: #008300;
+      --series-5: #4a3aa7;
+      --series-6: #e34948;
+      --series-7: #e87ba4;
+      --series-8: #eb6834;
+
+      --status-good: #0ca30c;
+      --status-warning: #b97d0a;
+      --status-critical: #d03b3b;
+
+      --shadow-card: 0 1px 2px rgba(16,16,26,0.04);
+      --shadow-pop: 0 16px 40px -16px rgba(30,25,80,0.28);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --surface-page: #0b0b11;
+      --surface-1: #14141d;
+      --surface-2: #1b1b27;
+      --field: #1b1b27;
+      --text-primary: #f4f4f8;
+      --text-secondary: #b9b9c9;
+      --text-muted: #7e7e90;
+      --border: rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.15);
+      --gridline: #23232e;
+      --baseline: #32323f;
+
+      --accent: #818cf8;
+      --accent-2: #60a5fa;
+      --accent-soft: rgba(129,140,248,0.14);
+      --brand: #818cf8;
+      --positive: #34d399;
+      --negative: #fb7185;
+
+      --series-1: #3987e5;
+      --series-2: #199e70;
+      --series-3: #c98500;
+      --series-4: #008300;
+      --series-5: #9085e9;
+      --series-6: #e66767;
+      --series-7: #d55181;
+      --series-8: #d95926;
+
+      --status-good: #0ca30c;
+      --status-warning: #fab219;
+      --status-critical: #f87171;
+
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.25);
+      --shadow-pop: 0 16px 40px -16px rgba(0,0,0,0.6);
+    }
+
+    html { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    html, body { overflow-x: hidden; max-width: 100%; }
+    body {
+      width: 100%;
+    }
+
+    main,
+    main > *,
+    .surface,
+    .grid {
+      min-width: 0;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding-left: 0;
+      }
+    }
+    body {
+      background: var(--surface-page);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Chart.js responsive: el canvas necesita un contenedor con ancho fijado
+       y position:relative, si no puede empujar el ancho de la página en móvil. */
+    canvas { max-width: 100%; }
+    main .h-64, main .h-56, main .h-48, main .h-12 { position: relative; width: 100%; }
+    ::selection { background: var(--accent-soft); }
+
+    .surface {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+
+    .gradient-text {
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    /* ---------- Botones ---------- */
+    button, .brand-btn, a[href] { transition: transform .14s ease, filter .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease; }
+    button:active, .brand-btn:active { transform: scale(.97); }
+    .brand-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: none;
+      box-shadow: 0 6px 20px -8px var(--accent);
+    }
+    .brand-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+    /* ---------- Campos de formulario ---------- */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+    select, textarea {
+      background-color: var(--field) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text-primary) !important;
+      border-radius: 0.75rem !important;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 3px var(--accent-soft) !important;
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); }
+    select:not([multiple]) {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238b8b9c' stroke-width='2'><path stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 0.7rem center;
+      background-size: 1rem;
+      padding-right: 2.3rem !important;
+      cursor: pointer;
+    }
+    option {
+      background-color: var(--surface-1);
+      color: var(--text-primary);
+    }
+    input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 1rem; height: 1rem;
+      cursor: pointer;
+    }
+    input[type="color"] {
+      background-color: var(--field) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 0.75rem !important;
+      padding: 0.25rem !important;
+      cursor: pointer;
+    }
+    input[type="file"] { color: var(--text-secondary); cursor: pointer; }
+    input[type="file"]::file-selector-button {
+      background: var(--surface-2);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.45rem 0.9rem;
+      margin-right: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background .15s ease;
+    }
+    input[type="file"]::file-selector-button:hover { background: var(--accent-soft); }
+
+    /* ---------- Tablas ---------- */
+    tbody tr { transition: background .12s ease; }
+    tbody tr:hover { background: var(--surface-2); }
+
+    /* ---------- Tarjetas interactivas ---------- */
+    a.surface:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-pop);
+      border-color: var(--border-strong);
+    }
+
+    /* ---------- Navegación lateral ---------- */
+    .nav-link {
+      color: var(--text-secondary);
+      border-radius: 0.85rem;
+    }
+    .nav-link:hover { background: var(--surface-2); color: var(--text-primary); }
+    .nav-link.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ---------- Nav inferior móvil ---------- */
+    .mobile-nav {
+      background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ---------- Accesibilidad e interacción ---------- */
+    button, select, label, a, input[type="checkbox"], input[type="file"], input[type="color"] { cursor: pointer; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
+    /* ---------- Animaciones ---------- */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    main > * { animation: rise .4s cubic-bezier(.22,1,.36,1) both; }
+    main > *:nth-child(1) { animation-delay: 0s; }
+    main > *:nth-child(2) { animation-delay: .05s; }
+    main > *:nth-child(3) { animation-delay: .1s; }
+    main > *:nth-child(4) { animation-delay: .15s; }
+    main > *:nth-child(5) { animation-delay: .2s; }
+    main > *:nth-child(n+6) { animation-delay: .25s; }
+    .progress-fill { transition: width .8s cubic-bezier(.22,1,.36,1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    [x-cloak] { display: none !important; }
+
+    /* ---------- Modo demo: difumina todas las cifras ---------- */
+    html.demo .amt {
+      filter: blur(7px);
+      user-select: none;
+    }
+    html.demo canvas {
+      filter: blur(6px);
+    }
+    /* background-clip:text + blur en un hijo rompe el render: en demo, color sólido */
+    html.demo .gradient-text {
+      background: none;
+      -webkit-background-clip: initial;
+      background-clip: initial;
+      color: var(--accent);
+    }
+    /* Icono del toggle: ojo abierto cuando las cifras se ven, tachado en modo demo */
+    .eye-closed { display: none; }
+    html.demo .eye-open { display: none; }
+    html.demo .eye-closed { display: block; }
+
+    /* ---------- PWA standalone (iOS): respetar notch/Dynamic Island ---------- */
+    @media all and (display-mode: standalone) {
+      aside.md\:flex { padding-top: env(safe-area-inset-top); }
+    }
+
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--baseline); border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+
+{% macro icon(d, cls='w-5 h-5') -%}
+<svg class="{{ cls }}" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ d }}"/></svg>
+{%- endmacro %}
+
+{% set ic_home = "M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" %}
+{% set ic_wallet = "M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" %}
+{% set ic_moves = "M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" %}
+{% set ic_check = "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" %}
+{% set ic_tag = "M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3zM6 6h.008v.008H6V6z" %}
+{% set ic_rules = "M9.813 15.904L9.375 17.25l-.438-1.346a2.25 2.25 0 00-1.44-1.44L6.15 14.025l1.346-.438a2.25 2.25 0 001.44-1.44l.438-1.345.438 1.345a2.25 2.25 0 001.44 1.44l1.346.438-1.346.438a2.25 2.25 0 00-1.44 1.44zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" %}
+{% set ic_pie = "M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" %}
+{% set ic_upload = "M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" %}
+{% set ic_download = "M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" %}
+{% set ic_logout = "M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" %}
+{% set ic_theme = "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" %}
+{% set ic_repeat = "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" %}
+{% set ic_menu = "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" %}
+{% set ic_gear = "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z" %}
+{% set ic_eye_off = "M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" %}
+{% set ic_eye = "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z" %}
+
+{% set nav_items = [
+  ("/", "Resumen", ic_home),
+  ("/accounts", "Cuentas", ic_wallet),
+  ("/transactions", "Movimientos", ic_moves),
+  ("/subscriptions", "Suscripciones", ic_repeat),
+  ("/transactions/review", "Revisión rápida", ic_check),
+  ("/categories", "Categorías", ic_tag),
+  ("/rules", "Reglas", ic_rules),
+  ("/budgets", "Presupuestos", ic_pie),
+  ("/imports", "Importar", ic_upload),
+  ("/export", "Exportar", ic_download),
+] %}
+
+<body class="min-h-screen" x-data="{ menuOpen: false }">
+  <div class="min-h-screen">
+    <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 z-40 w-64 border-r overflow-hidden"
+       style="background: var(--surface-1); border-color: var(--border)">
+      <div class="px-5 py-6 flex items-center gap-3">
+        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-lg"
+              style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 20px -8px var(--accent)">M</span>
+        <span class="text-lg font-bold tracking-tight">{{ app_name }}</span>
+      </div>
+
+      <form action="/search" method="get" class="px-3 pb-3">
+        <input type="search" name="q" placeholder="{{ t('Buscar…') }}" value="{{ request.query_params.get('q', '') if request.url.path == '/search' else '' }}"
+               class="w-full px-3.5 py-2 text-sm" />
+      </form>
+
+      <nav class="flex-1 px-3 space-y-1 text-sm overflow-y-auto">
+        {% for href, label, d in nav_items %}
+        <a href="{{ href }}"
+           class="nav-link flex items-center gap-3 px-3.5 py-2.5 {{ 'active' if request.url.path == href else '' }}">
+          {{ icon(d) }}
+          <span>{{ t(label) }}</span>
+        </a>
+        {% endfor %}
+      </nav>
+
+      <div class="px-3 py-4 space-y-1 border-t text-sm" style="border-color: var(--border)">
+        <button onclick="toggleDemo()" class="nav-link w-full flex items-center gap-3 px-3.5 py-2.5">
+          {{ icon(ic_eye, 'w-5 h-5 eye-open') }}
+          {{ icon(ic_eye_off, 'w-5 h-5 eye-closed') }}
+          <span>{{ t('Modo demo') }}</span>
+        </button>
+        <button onclick="toggleTheme()" class="nav-link w-full flex items-center gap-3 px-3.5 py-2.5">
+          {{ icon(ic_theme) }}
+          <span>{{ t('Cambiar tema') }}</span>
+        </button>
+        <a href="/settings" class="nav-link flex items-center gap-3 px-3.5 py-2.5 {{ 'active' if request.url.path == '/settings' else '' }}">
+          {{ icon(ic_gear) }}
+          <span>{{ t('Ajustes') }}</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="flex min-h-screen flex-col min-w-0 md:ml-64">
+      <header class="md:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between border-b"
+              style="background: color-mix(in srgb, var(--surface-1) 88%, transparent); backdrop-filter: blur(14px); border-color: var(--border); padding-top: calc(0.75rem + env(safe-area-inset-top))">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold"
+                style="background: linear-gradient(135deg, var(--accent), var(--accent-2))">M</span>
+          <span class="font-bold tracking-tight">{{ app_name }}</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <a href="/search" class="p-2 rounded-lg text-secondary" aria-label="Buscar">
+            {{ icon("M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z") }}
+          </a>
+          <button onclick="toggleDemo()" class="p-2 rounded-lg text-secondary" aria-label="Modo demo">
+            {{ icon(ic_eye, 'w-5 h-5 eye-open') }}
+            {{ icon(ic_eye_off, 'w-5 h-5 eye-closed') }}
+          </button>
+          <button onclick="toggleTheme()" class="p-2 rounded-lg text-secondary" aria-label="Cambiar tema">
+            {{ icon(ic_theme) }}
+          </button>
+          <button @click="menuOpen = true" class="p-2 rounded-lg text-secondary" aria-label="Abrir menú">
+            {{ icon(ic_menu) }}
+          </button>
+        </div>
+      </header>
+
+      <main class="flex-1 p-4 md:p-8 pb-28 md:pb-10 max-w-6xl w-full mx-auto">
+        {% set msg = request.query_params.get('msg') %}
+        {% if msg %}
+        <div class="mb-5 rounded-2xl px-4 py-3 text-sm font-medium flex items-center gap-2.5"
+             style="background: color-mix(in srgb, var(--positive) 12%, transparent); color: var(--positive); border: 1px solid color-mix(in srgb, var(--positive) 35%, transparent)">
+          {{ icon(ic_check, 'w-5 h-5 shrink-0') }}
+          {{ msg }}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 mobile-nav">
+    <div class="grid grid-cols-5 items-end text-[10px] font-medium">
+      {% set mnav = [
+        ("/", "Resumen", ic_home),
+        ("/transactions", "Movim.", ic_moves),
+      ] %}
+      {% for href, label, d in mnav %}
+      <a href="{{ href }}" class="flex flex-col items-center gap-1 py-2.5"
+         style="color: {{ 'var(--accent)' if request.url.path == href else 'var(--text-muted)' }}">
+        {{ icon(d, 'w-6 h-6') }}
+        <span>{{ t(label) }}</span>
+      </a>
+      {% endfor %}
+
+      <a href="/imports/new" class="flex flex-col items-center py-2.5" aria-label="Importar">
+        <span class="w-12 h-12 -mt-7 rounded-full flex items-center justify-center text-white shadow-xl"
+              style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 24px -8px var(--accent)">
+          {{ icon(ic_upload, 'w-6 h-6') }}
+        </span>
+      </a>
+
+      {% set mnav2 = [
+        ("/subscriptions", "Subs", ic_repeat),
+        ("/accounts", "Cuentas", ic_wallet),
+      ] %}
+      {% for href, label, d in mnav2 %}
+      <a href="{{ href }}" class="flex flex-col items-center gap-1 py-2.5"
+         style="color: {{ 'var(--accent)' if request.url.path == href else 'var(--text-muted)' }}">
+        {{ icon(d, 'w-6 h-6') }}
+        <span>{{ t(label) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <div x-cloak x-show="menuOpen" class="md:hidden fixed inset-0 z-50" role="dialog" aria-label="Menú">
+    <div class="absolute inset-0" style="background: rgba(0,0,0,0.55)" @click="menuOpen = false"
+         x-show="menuOpen" x-transition.opacity.duration.200ms></div>
+    <aside class="absolute inset-y-0 right-0 w-72 max-w-[85vw] flex flex-col overflow-y-auto"
+           style="background: var(--surface-1); border-left: 1px solid var(--border)"
+           x-show="menuOpen"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full">
+      <div class="px-5 py-5 flex items-center justify-between border-b" style="border-color: var(--border)">
+        <span class="font-bold">{{ t('Menú') }}</span>
+        <button @click="menuOpen = false" class="p-1.5 rounded-lg text-secondary" aria-label="Cerrar menú">
+          {{ icon("M6 18L18 6M6 6l12 12") }}
+        </button>
+      </div>
+      <form action="/search" method="get" class="px-4 pt-3">
+        <input type="search" name="q" placeholder="{{ t('Buscar…') }}" class="w-full px-3.5 py-2 text-sm" />
+      </form>
+      <nav class="flex-1 px-3 py-3 space-y-1 text-sm">
+        {% for href, label, d in nav_items %}
+        <a href="{{ href }}"
+           class="nav-link flex items-center gap-3 px-3.5 py-3 {{ 'active' if request.url.path == href else '' }}">
+          {{ icon(d) }}
+          <span>{{ t(label) }}</span>
+        </a>
+        {% endfor %}
+      </nav>
+      <div class="px-3 py-4 border-t" style="border-color: var(--border)">
+        <a href="/settings" class="nav-link flex items-center gap-3 px-3.5 py-3 text-sm {{ 'active' if request.url.path == '/settings' else '' }}">
+          {{ icon(ic_gear) }}
+          <span>{{ t('Ajustes') }}</span>
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('miney-theme', next);
+      window.dispatchEvent(new CustomEvent('themechange'));
+    }
+    function toggleDemo() {
+      const active = document.documentElement.classList.toggle('demo');
+      localStorage.setItem('miney-demo', active ? '1' : '0');
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

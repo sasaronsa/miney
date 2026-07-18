@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Búsqueda') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-5">{{ t('Búsqueda') }}</h1>
+
+<form method="get" action="/search" class="mb-7">
+  <input type="search" name="q" value="{{ q }}" placeholder="{{ t('Buscar movimientos, cuentas, categorías, suscripciones…') }}"
+         autofocus class="w-full px-4 py-3 text-base" />
+</form>
+
+{% if q and q | length < 2 %}
+<p class="text-secondary text-sm">{{ t('Escribe al menos 2 caracteres.') }}</p>
+{% elif q %}
+
+{% if results.accounts or results.categories or results.subscriptions %}
+<div class="flex flex-wrap gap-2 mb-7">
+  {% for a in results.accounts %}
+  <a href="/accounts/{{ a.id }}" class="surface rounded-full px-3.5 py-2 text-sm font-medium flex items-center gap-2">
+    <span class="w-2.5 h-2.5 rounded-full" style="background: {{ a.color }}"></span>
+    {{ a.name }} <span class="text-muted text-xs">{{ t('cuenta') }}</span>
+  </a>
+  {% endfor %}
+  {% for c in results.categories %}
+  <a href="/transactions?category_id={{ c.id }}" class="surface rounded-full px-3.5 py-2 text-sm font-medium flex items-center gap-2">
+    <span class="w-2.5 h-2.5 rounded-full" style="background: {{ c.color }}"></span>
+    {{ c.name }} <span class="text-muted text-xs">{{ t('categoría') }}</span>
+  </a>
+  {% endfor %}
+  {% for s in results.subscriptions %}
+  <a href="/subscriptions" class="surface rounded-full px-3.5 py-2 text-sm font-medium flex items-center gap-2">
+    🔁 {{ s.name }} <span class="text-muted text-xs">{{ t('suscripción') }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="flex items-center justify-between mb-3">
+  <h2 class="font-semibold">{{ t('Movimientos') }} <span class="text-muted font-normal text-sm">({{ results.tx_total }})</span></h2>
+  {% if results.tx_total > max_tx %}
+  <a href="/transactions?q={{ q | urlencode }}" class="text-sm font-medium" style="color: var(--accent)">{{ t('Ver todos con filtros →') }}</a>
+  {% endif %}
+</div>
+
+{% if results.transactions %}
+<div class="space-y-2.5">
+  {% for tx in results.transactions %}
+  <a href="/transactions/{{ tx.id }}/edit" class="surface rounded-2xl p-4 flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <p class="font-medium truncate">{{ tx.description }}</p>
+      <p class="text-xs text-muted mt-1 truncate">
+        {{ tx.date | fecha }}
+        · {{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}
+        {% if tx.category_id and tx.category_id in categories_by_id %}
+        · <span style="color: {{ categories_by_id[tx.category_id].color }}">{{ categories_by_id[tx.category_id].name }}</span>
+        {% endif %}
+      </p>
+    </div>
+    <span class="font-semibold whitespace-nowrap shrink-0" style="color: {{ 'var(--negative)' if tx.amount_cents < 0 else 'var(--positive)' }}">
+      {{ tx.amount_cents | eur }}
+    </span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="surface rounded-2xl p-8 text-center text-secondary text-sm">Sin movimientos que coincidan con "{{ q }}".</div>
+{% endif %}
+
+{% else %}
+<div class="surface rounded-2xl p-8 text-center text-secondary text-sm">
+  {{ t('Busca por texto en la descripción de movimientos, o por nombre de cuentas, categorías y suscripciones.') }}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Exportar') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ t('Exportar datos') }}</h1>
+
+<div class="surface rounded-2xl p-6 max-w-lg space-y-4">
+  <p class="text-sm text-secondary">{{ t('Descarga una copia de todos tus movimientos para backup o análisis externo.') }}</p>
+  <div class="flex gap-3">
+    <a href="/export/transactions.csv" class="brand-btn rounded-lg px-4 py-2 text-sm font-semibold">{{ t('Descargar CSV') }}</a>
+    <a href="/export/transactions.json" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--border)">{{ t('Descargar JSON') }}</a>
+  </div>
+</div>
+{% endblock %}

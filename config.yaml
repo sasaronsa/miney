@@ -1,0 +1,25 @@
+name: "Miney"
+version: "1.0.0"
+slug: "miney"
+description: "Finanzas personales autohospedadas: ahorro, gastos por categoría, suscripciones e importación de extractos bancarios (CSV/Excel/PDF)"
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+ports:
+  8000/tcp: 8010
+ports_description:
+  8000/tcp: "Interfaz web de Miney (pensada para servirse detrás de un Cloudflare Tunnel o proxy con HTTPS)"
+options:
+  username: "admin"
+  password: ""
+  app_name: "Miney"
+  currency: "EUR"
+  secret_key: ""
+schema:
+  username: "str"
+  password: "password"
+  app_name: "str?"
+  currency: "str?"
+  secret_key: "password?"

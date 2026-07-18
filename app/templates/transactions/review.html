@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Revisión rápida') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">{{ t('Revisión rápida') }}</h1>
+<p class="text-secondary text-sm mb-6">{{ transactions | length }} {{ t('movimientos sin categorizar. Selecciona varios y asígnales una categoría de una vez, o cambia cada uno individualmente.') }}</p>
+
+{% if transactions %}
+<form method="post" action="/transactions/bulk-categorize" x-data="{ checkedCount: 0 }">
+  <div class="rounded-2xl p-3.5 mb-4 flex flex-wrap items-center gap-3 sticky top-2 md:top-4 z-20"
+       style="background: color-mix(in srgb, var(--surface-1) 90%, transparent); backdrop-filter: blur(14px); border: 1px solid var(--border); box-shadow: var(--shadow-pop)">
+    <select name="category_id" required class="w-full sm:w-auto sm:flex-1 min-w-0 px-3.5 py-2.5 text-sm">
+      <option value="" disabled selected>{{ t('Asignar categoría a seleccionados…') }}</option>
+      {% for c in categories %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="brand-btn rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap">{{ t('Aplicar') }}</button>
+    <label class="text-sm flex items-center gap-2 cursor-pointer whitespace-nowrap text-secondary">
+      <input type="checkbox" onclick="document.querySelectorAll('.tx-check').forEach(c => c.checked = this.checked)" />
+      {{ t('Marcar todos') }}
+    </label>
+  </div>
+
+  <div class="surface rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-muted border-b" style="border-color: var(--border)">
+            <th class="py-3 px-4"></th>
+            <th class="py-3 px-4">{{ t('Fecha') }}</th>
+            <th class="py-3 px-4">{{ t('Descripción') }}</th>
+            <th class="py-3 px-4">{{ t('Cuenta') }}</th>
+            <th class="py-3 px-4 text-right">{{ t('Importe') }}</th>
+            <th class="py-3 px-4">{{ t('Categoría rápida') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr class="border-b" style="border-color: var(--border)">
+            <td class="py-2.5 px-4"><input type="checkbox" class="tx-check" name="transaction_ids" value="{{ tx.id }}" /></td>
+            <td class="py-2.5 px-4 whitespace-nowrap">{{ tx.date | fecha }}</td>
+            <td class="py-2.5 px-4">{{ tx.description }}</td>
+            <td class="py-2.5 px-4 text-secondary">{{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}</td>
+            <td class="py-2.5 px-4 text-right font-medium" style="color: {{ 'var(--negative)' if tx.amount_cents < 0 else 'var(--positive)' }}">
+              {{ tx.amount_cents | eur }}
+            </td>
+            <td class="py-2.5 px-4" id="cat-select-{{ tx.id }}">
+              {% with transaction = tx %}
+                {% include "partials/category_select.html" %}
+              {% endwith %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</form>
+{% else %}
+<div class="surface rounded-2xl p-8 text-center text-secondary">
+  🎉 {{ t('Todos los movimientos están categorizados.') }}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Editar movimiento') if transaction else t('Nuevo movimiento') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ t('Editar movimiento') if transaction else t('Nuevo movimiento') }}</h1>
+
+<form method="post" action="{{ '/transactions/' ~ transaction.id ~ '/edit' if transaction else '/transactions/new' }}"
+      class="surface rounded-2xl p-6 max-w-lg space-y-4">
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Fecha') }}</label>
+      <input type="date" name="tx_date" required value="{{ transaction.date.isoformat() if transaction else '' }}"
+             class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+    </div>
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Tipo') }}</label>
+      <select name="transaction_type" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+        <option value="expense" {{ 'selected' if transaction and transaction.transaction_type.value == 'expense' else '' }}>{{ t('Gasto') }}</option>
+        <option value="income" {{ 'selected' if transaction and transaction.transaction_type.value == 'income' else '' }}>{{ t('Ingreso') }}</option>
+        <option value="transfer" {{ 'selected' if transaction and transaction.transaction_type.value == 'transfer' else '' }}>{{ t('Transferencia') }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm mb-1 text-secondary">{{ t('Descripción') }}</label>
+    <input name="description" required value="{{ transaction.description if transaction else '' }}"
+           class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Importe (€, positivo)') }}</label>
+      <input name="amount" required value="{{ '%.2f' % ((transaction.amount_cents | abs) / 100) if transaction else '' }}"
+             class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
+    </div>
+    <div>
+      <label class="block text-sm mb-1 text-secondary">{{ t('Cuenta') }}</label>
+      <select name="account_id" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+        {% for a in accounts %}
+        <option value="{{ a.id }}" {{ 'selected' if transaction and transaction.account_id == a.id else '' }}>{{ a.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label class="block text-sm mb-1 text-secondary">{{ t('Categoría') }}</label>
+    <select name="category_id" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">
+      <option value="">{{ t('Sin categorizar') }}</option>
+      {% for c in categories %}
+      <option value="{{ c.id }}" {{ 'selected' if transaction and transaction.category_id == c.id else '' }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-sm mb-1 text-secondary">{{ t('Notas (opcional)') }}</label>
+    <textarea name="notes" rows="2" class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">{{ transaction.notes if transaction and transaction.notes else '' }}</textarea>
+  </div>
+
+  {% if transaction %}
+  <div class="border-t pt-4" style="border-color: var(--border)"
+       x-data='{ splits: {{ (splits_data or []) | tojson }} }'>
+    <div class="flex items-center justify-between mb-1">
+      <p class="text-sm font-medium">{{ t('Dividir en varias categorías') }}</p>
+      <button type="button" @click="splits.push({category_id: '', amount: ''})"
+              class="text-xs font-semibold" style="color: var(--accent)">{{ t('+ Añadir división') }}</button>
+    </div>
+    <p class="text-xs text-muted mb-3">{{ t('Reparte el cargo entre categorías. La parte sin repartir se queda en la categoría principal.') }}</p>
+    <template x-for="(s, i) in splits" :key="i">
+      <div class="flex items-center gap-2 mb-2">
+        <select name="split_category_id" x-model="s.category_id" class="flex-1 min-w-0 px-3 py-2 text-sm">
+          <option value="">{{ t('— Categoría —') }}</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+        <input name="split_amount" x-model="s.amount" placeholder="0,00"
+               class="w-24 px-3 py-2 text-sm text-right" />
+        <button type="button" @click="splits.splice(i, 1)" class="p-1.5 text-sm shrink-0"
+                style="color: var(--negative)" aria-label="Quitar división">✕</button>
+      </div>
+    </template>
+    <p class="text-xs text-muted" x-show="splits.length === 0">{{ t('Sin divisiones — todo el importe cuenta en la categoría principal.') }}</p>
+  </div>
+  {% endif %}
+
+  <div class="flex gap-3 pt-2">
+    <button type="submit" class="brand-btn rounded-xl px-5 py-2.5 text-sm font-semibold">{{ t('Guardar') }}</button>
+    <a href="/transactions" class="rounded-xl px-5 py-2.5 text-sm border font-medium" style="border-color: var(--border)">{{ t('Cancelar') }}</a>
+  </div>
+</form>
+
+{% if transaction %}
+<form method="post" action="/transactions/{{ transaction.id }}/delete" class="max-w-lg mt-4 flex justify-end"
+      onsubmit="return confirm('¿Eliminar este movimiento?');">
+  <button type="submit" class="text-sm font-medium" style="color: var(--negative)">{{ t('Eliminar movimiento') }}</button>
+</form>
+{% endif %}
+{% endblock %}

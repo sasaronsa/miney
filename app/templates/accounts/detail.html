@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ account.name }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <div class="flex items-center gap-3">
+    <span class="w-4 h-4 rounded-full" style="background: {{ account.color }}"></span>
+    <h1 class="text-2xl font-bold">{{ account.name }}</h1>
+  </div>
+  <div class="flex gap-2">
+    <a href="/accounts/{{ account.id }}/edit" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--border)">{{ t('Editar') }}</a>
+    <form method="post" action="/accounts/{{ account.id }}/delete" onsubmit="return confirm('¿Eliminar o desactivar esta cuenta?');">
+      <button type="submit" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--status-critical); color: var(--status-critical)">{{ t('Eliminar') }}</button>
+    </form>
+  </div>
+</div>
+
+<div class="surface rounded-2xl p-5 mb-6">
+  <p class="text-xs text-muted uppercase tracking-wide mb-1">{{ t('Saldo actual') }}</p>
+  <p class="text-3xl font-bold mb-4">{{ balance_cents | eur }}</p>
+  <div class="h-56"><canvas id="accountBalanceChart"></canvas></div>
+</div>
+
+<div class="surface rounded-2xl p-5">
+  <h2 class="font-semibold mb-4">{{ t('Últimos movimientos') }}</h2>
+  {% if recent_txs %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-muted border-b" style="border-color: var(--border)">
+          <th class="py-2 pr-4">{{ t('Fecha') }}</th>
+          <th class="py-2 pr-4">{{ t('Descripción') }}</th>
+          <th class="py-2 text-right">{{ t('Importe') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in recent_txs %}
+        <tr class="border-b" style="border-color: var(--border)">
+          <td class="py-2 pr-4 whitespace-nowrap">{{ tx.date | fecha }}</td>
+          <td class="py-2 pr-4">{{ tx.description }}</td>
+          <td class="py-2 text-right font-medium" style="color: {{ 'var(--negative)' if tx.amount_cents < 0 else 'var(--positive)' }}">
+            {{ tx.amount_cents | eur }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-secondary text-sm">{{ t('Sin movimientos todavía.') }}</p>
+  {% endif %}
+  <a href="/transactions?account_id={{ account.id }}" class="inline-block mt-4 text-sm font-medium" style="color: var(--brand)">{{ t('Ver todos los movimientos →') }}</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const style = getComputedStyle(document.documentElement);
+  const cssVar = (n) => style.getPropertyValue(n).trim();
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  Chart.defaults.color = cssVar('--text-muted');
+  Chart.defaults.plugins.tooltip.backgroundColor = cssVar('--surface-2');
+  Chart.defaults.plugins.tooltip.titleColor = cssVar('--text-primary');
+  Chart.defaults.plugins.tooltip.bodyColor = cssVar('--text-secondary');
+  Chart.defaults.plugins.tooltip.borderColor = cssVar('--border-strong');
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.cornerRadius = 12;
+  Chart.defaults.plugins.tooltip.padding = 12;
+  Chart.defaults.plugins.tooltip.displayColors = false;
+
+  const series = {{ series | tojson }};
+  const ctx = document.getElementById('accountBalanceChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 230);
+  grad.addColorStop(0, '{{ account.color }}55');
+  grad.addColorStop(1, '{{ account.color }}00');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: series.map(p => p.date),
+      datasets: [{
+        data: series.map(p => p.balance_cents / 100),
+        borderColor: '{{ account.color }}',
+        backgroundColor: grad,
+        fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5,
+        pointHoverRadius: 5, pointHoverBackgroundColor: '{{ account.color }}',
+        pointHoverBorderColor: cssVar('--surface-1'), pointHoverBorderWidth: 2,
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
+        y: { grid: { color: cssVar('--gridline') }, border: { display: false }, ticks: { callback: (v) => v.toLocaleString('es-ES') + ' €', maxTicksLimit: 6 } },
+      }
+    }
+  });
+</script>
+{% endblock %}

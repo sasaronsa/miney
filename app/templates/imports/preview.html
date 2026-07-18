@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Vista previa de importación') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">{{ t('Vista previa de importación') }}</h1>
+<p class="text-secondary text-sm mb-6">{{ t('Paso 3 de 3 — Revisa los movimientos detectados antes de confirmar.') }}</p>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="surface rounded-2xl p-4">
+    <p class="text-xs text-muted mb-1">{{ t('Total filas') }}</p>
+    <p class="text-xl font-bold">{{ preview.total_rows }}</p>
+  </div>
+  <div class="surface rounded-2xl p-4">
+    <p class="text-xs text-muted mb-1">{{ t('Duplicados detectados') }}</p>
+    <p class="text-xl font-bold" style="color: var(--status-warning)">{{ preview.duplicate_rows }}</p>
+  </div>
+  <div class="surface rounded-2xl p-4">
+    <p class="text-xs text-muted mb-1">{{ t('Filas con error') }}</p>
+    <p class="text-xl font-bold" style="color: var(--status-critical)">{{ preview.error_rows }}</p>
+  </div>
+  <div class="surface rounded-2xl p-4">
+    <p class="text-xs text-muted mb-1">{{ t('Se importarán') }}</p>
+    <p class="text-xl font-bold" style="color: var(--status-good)">{{ preview.insertable_rows }}</p>
+  </div>
+</div>
+
+{% if preview.transfer_rows %}
+<div class="mb-6 rounded-2xl px-4 py-3 text-sm flex items-start gap-2.5"
+     style="background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent)">
+  <span class="text-base">🔁</span>
+  <p>{{ t('Se han detectado') }} <strong>{{ preview.transfer_rows }} {{ t('posibles transferencias internas') }}</strong>. {{ t('Las marcadas se registrarán como transferencia y no contarán como ingreso ni gasto. Desmarca la casilla de una fila si en realidad no es una transferencia.') }}</p>
+</div>
+{% endif %}
+
+<form method="post" action="/imports/confirm">
+  <input type="hidden" name="upload_id" value="{{ upload_id }}" />
+  <input type="hidden" name="account_id" value="{{ account_id }}" />
+  <input type="hidden" name="filename" value="{{ filename }}" />
+  <input type="hidden" name="source" value="{{ source }}" />
+  <input type="hidden" name="date_column" value="{{ mapping.date_column }}" />
+  <input type="hidden" name="description_column" value="{{ mapping.description_column }}" />
+  <input type="hidden" name="amount_column" value="{{ mapping.amount_column or '' }}" />
+  <input type="hidden" name="debit_column" value="{{ mapping.debit_column or '' }}" />
+  <input type="hidden" name="credit_column" value="{{ mapping.credit_column or '' }}" />
+  <input type="hidden" name="external_id_column" value="{{ mapping.external_id_column or '' }}" />
+  <input type="hidden" name="date_format" value="{{ mapping.date_format }}" />
+  <input type="hidden" name="decimal_separator" value="{{ mapping.decimal_separator }}" />
+  <input type="hidden" name="thousands_separator" value="{{ mapping.thousands_separator }}" />
+  <input type="hidden" name="total_rows" value="{{ preview.total_rows }}" />
+  <input type="hidden" name="duplicate_rows" value="{{ preview.duplicate_rows }}" />
+  <input type="hidden" name="mapping_template_id" value="{{ mapping_template_id }}" />
+
+  <div class="surface rounded-2xl overflow-hidden mb-4">
+    <div class="overflow-x-auto max-h-[32rem] overflow-y-auto">
+      <table class="w-full text-xs">
+        <thead class="sticky top-0 surface">
+          <tr class="text-left text-muted border-b" style="border-color: var(--border)">
+            <th class="py-2 px-3"><input type="checkbox" onclick="document.querySelectorAll('.row-check').forEach(c => { if (!c.disabled) c.checked = this.checked; })" checked /></th>
+            <th class="py-2 px-3">{{ t('Fecha') }}</th>
+            <th class="py-2 px-3">{{ t('Descripción') }}</th>
+            <th class="py-2 px-3 text-right">{{ t('Importe') }}</th>
+            <th class="py-2 px-3">{{ t('Categoría sugerida') }}</th>
+            <th class="py-2 px-3">{{ t('Estado') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in preview.rows %}
+          <tr class="border-b {{ 'opacity-60' if row.error else '' }}" style="border-color: var(--border)">
+            <td class="py-1.5 px-3">
+              {% if row.error %}
+              <input type="checkbox" disabled />
+              {% else %}
+              <input type="checkbox" class="row-check" name="include" value="{{ row.row_index }}" {{ '' if row.is_duplicate else 'checked' }} />
+              {% endif %}
+            </td>
+            <td class="py-1.5 px-3 whitespace-nowrap">{{ row.date | fecha if row.date else '—' }}</td>
+            <td class="py-1.5 px-3">{{ row.description }}</td>
+            <td class="py-1.5 px-3 text-right font-medium" style="color: {{ 'var(--negative)' if row.amount_cents and row.amount_cents < 0 else 'var(--positive)' }}">
+              {{ (row.amount_cents | eur) if row.amount_cents is not none else '—' }}
+            </td>
+            <td class="py-1.5 px-3 text-secondary">{{ row.suggested_category_name or '—' }}</td>
+            <td class="py-1.5 px-3">
+              {% if row.error %}
+              <span style="color: var(--status-critical)">Error: {{ row.error }}</span>
+              {% elif row.is_duplicate %}
+              <span style="color: var(--status-warning)">{{ t('Duplicado') }} — {{ row.duplicate_reason }}</span>
+              {% elif row.possible_transfer %}
+              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap" style="color: var(--accent)">
+                <input type="checkbox" name="transfer" value="{{ row.row_index }}" checked />
+                🔁 {{ t('Transferencia con') }} {{ row.transfer_account_name }} ({{ row.transfer_date | fecha }})
+              </label>
+              {% else %}
+              <span style="color: var(--status-good)">{{ t('Nuevo') }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="flex gap-3">
+    <button type="submit" class="brand-btn rounded-lg px-5 py-2.5 text-sm font-semibold">{{ t('Confirmar importación') }}</button>
+    <a href="/imports/new" class="rounded-lg px-5 py-2.5 text-sm border" style="border-color: var(--border)">{{ t('Cancelar') }}</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ t('Iniciar sesión') }} · {{ app_name }}</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('miney-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+    })();
+  </script>
+  <link rel="manifest" href="/static/manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0b11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="{{ app_name }}" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root, [data-theme="light"] {
+      color-scheme: light;
+      --surface-page: #f4f4f8; --surface-1: #ffffff; --field: #ffffff;
+      --text-primary: #101017; --text-secondary: #4c4c5c; --text-muted: #8b8b9c;
+      --border: rgba(16,16,26,0.08);
+      --accent: #4f46e5; --accent-2: #2563eb; --accent-soft: rgba(79,70,229,0.12);
+      --negative: #e11d48;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --surface-page: #0b0b11; --surface-1: #14141d; --field: #1b1b27;
+      --text-primary: #f4f4f8; --text-secondary: #b9b9c9; --text-muted: #7e7e90;
+      --border: rgba(255,255,255,0.07);
+      --accent: #818cf8; --accent-2: #60a5fa; --accent-soft: rgba(129,140,248,0.14);
+      --negative: #fb7185;
+    }
+    html { font-family: 'Inter', system-ui, sans-serif; }
+    body { background: var(--surface-page); color: var(--text-primary); -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+    .blob {
+      position: fixed; border-radius: 9999px; filter: blur(90px); opacity: .35; pointer-events: none;
+      animation: float 14s ease-in-out infinite alternate;
+    }
+    @keyframes float { from { transform: translateY(0) scale(1); } to { transform: translateY(-40px) scale(1.1); } }
+
+    input {
+      background: var(--field) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text-primary) !important;
+      border-radius: .8rem !important;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft) !important; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .card { animation: rise .45s cubic-bezier(.22,1,.36,1) both; }
+    button:active { transform: scale(.97); }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+  <span class="blob w-96 h-96 -top-20 -left-20" style="background: var(--accent)"></span>
+  <span class="blob w-80 h-80 -bottom-24 -right-16" style="background: var(--accent-2); animation-delay: -7s"></span>
+
+  <div class="card relative w-full max-w-sm rounded-3xl p-8"
+       style="background: var(--surface-1); border: 1px solid var(--border); box-shadow: 0 24px 60px -24px rgba(0,0,0,.4)">
+    <div class="flex flex-col items-center mb-8">
+      <span class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl mb-4"
+            style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 30px -10px var(--accent)">M</span>
+      <h1 class="text-xl font-bold tracking-tight">{{ app_name }}</h1>
+      <p class="text-sm mt-1" style="color: var(--text-muted)">{{ t('Tu dinero, bajo control') }}</p>
+    </div>
+
+    {% if error %}
+    <div class="mb-5 rounded-xl px-4 py-3 text-sm font-medium"
+         style="background: color-mix(in srgb, var(--negative) 12%, transparent); color: var(--negative); border: 1px solid color-mix(in srgb, var(--negative) 35%, transparent)">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login" class="space-y-4">
+      <input type="hidden" name="next" value="{{ next }}" />
+      <div>
+        <label class="block text-sm font-medium mb-1.5" style="color: var(--text-secondary)">{{ t('Usuario') }}</label>
+        <input type="text" name="username" required autofocus autocomplete="username"
+               class="w-full px-3.5 py-2.5" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5" style="color: var(--text-secondary)">{{ t('Contraseña') }}</label>
+        <input type="password" name="password" required autocomplete="current-password"
+               class="w-full px-3.5 py-2.5" />
+      </div>
+      <button type="submit"
+              class="w-full rounded-xl py-3 font-semibold text-white transition hover:brightness-110"
+              style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 24px -10px var(--accent)">
+        {{ t('Entrar') }}
+      </button>
+    </form>
+  </div>
+</body>
+</html>
