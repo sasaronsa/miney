@@ -15,5 +15,11 @@ services:
     volumes:
       - miney_data:/data
 
+  cloudflared-miney:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-miney
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    
 volumes:
   miney_data:
