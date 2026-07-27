@@ -3,7 +3,7 @@
   hx-target="#cat-select-{{ transaction.id }}"
   hx-swap="innerHTML"
   hx-trigger="change"
-  name="quick_category_id"
+  hx-vals='js:{quick_category_id: event.target.value}'
   class="rounded-lg border px-2 py-1.5 bg-transparent text-xs"
   style="border-color: var(--border)"
 >
