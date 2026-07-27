@@ -29,7 +29,10 @@ def parse_csv(content: bytes, *, delimiter: str = ";", encoding: str = "utf-8", 
 
 
 def parse_excel(content: bytes, *, header_row: int = 0) -> pd.DataFrame:
-    df = pd.read_excel(io.BytesIO(content), header=header_row, dtype=str)
+    # Sin dtype=str: una celda numerica de Excel debe llegar como int/float autentico
+    # (no como texto) para que parse_amount la use tal cual sin aplicarle separadores
+    # de miles/decimales, que solo tienen sentido para texto (CSV o celdas de texto).
+    df = pd.read_excel(io.BytesIO(content), header=header_row)
     return _clean_dataframe(df)
 
 

@@ -35,9 +35,26 @@ def _is_empty(value) -> bool:
     return value is None or str(value).strip().lower() in EMPTY_VALUES
 
 
+def _clean_text(value) -> str:
+    """str() de una celda evitando el sufijo ".0" que pandas anade a columnas
+    numericas con huecos (una columna de IDs con alguna celda vacia se infiere
+    como float y un ID entero como 12345 se leeria "12345.0")."""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
 def parse_amount(raw, decimal_sep: str, thousands_sep: str) -> int:
     if _is_empty(raw):
         raise ValueError("importe vacio")
+
+    # Una celda de Excel numerica llega aqui como int/float autentico (p.ej. -380.1),
+    # independientemente de como Excel la mostrara (moneda, coma, etc). Su "." es el
+    # punto decimal real de Python, no una eleccion de formato: aplicarle decimal_sep/
+    # thousands_sep lo corrompe (p.ej. con miles="." se borraba el punto y el importe
+    # se multiplicaba x100). Los numeros nativos se usan tal cual, sin tocar separadores.
+    if pd.api.types.is_number(raw) and not isinstance(raw, bool):
+        return round(float(raw) * 100)
 
     s = str(raw).strip()
     negative = False
@@ -82,7 +99,7 @@ def normalize_rows(df: pd.DataFrame, mapping: ColumnMapping) -> list[NormalizedR
     for idx, row in df.iterrows():
         try:
             tx_date = parse_date(row.get(mapping.date_column), mapping.date_format)
-            description = str(row.get(mapping.description_column) or "").strip()
+            description = _clean_text(row.get(mapping.description_column) or "").strip()
 
             if mapping.amount_column:
                 amount_cents = parse_amount(
@@ -106,7 +123,7 @@ def normalize_rows(df: pd.DataFrame, mapping: ColumnMapping) -> list[NormalizedR
             external_id = None
             if mapping.external_id_column:
                 val = row.get(mapping.external_id_column)
-                external_id = str(val).strip() if not _is_empty(val) else None
+                external_id = _clean_text(val).strip() if not _is_empty(val) else None
 
             if not description:
                 raise ValueError("descripcion vacia")

@@ -102,8 +102,12 @@ def _mapping_from_form(
         credit_column=credit_column or None,
         external_id_column=external_id_column or None,
         date_format=date_format or "%d/%m/%Y",
-        decimal_separator=decimal_separator or ",",
-        thousands_separator=thousands_separator or ".",
+        # OJO: no usar `or ","`/`or "."` aqui. El usuario puede dejar el separador de
+        # miles vacio a proposito (p.ej. decimal="." y miles=""); Form(...) ya aporta
+        # el valor por defecto cuando el campo no se envia, asi que "" siempre es una
+        # eleccion explicita del usuario y debe respetarse tal cual.
+        decimal_separator=decimal_separator,
+        thousands_separator=thousands_separator,
     )
 
 
