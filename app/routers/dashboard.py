@@ -22,7 +22,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         "expenses_month": stats.expenses_by_category(session, year=today.year, month=today.month)[:8],
         "expenses_year": stats.expenses_by_category(session, year=today.year)[:8],
         "top_merchants": stats.top_merchants(session, year=today.year, month=today.month, limit=8),
-        "savings_rate_month": stats.savings_rate(session, year=today.year, month=today.month),
+        "savings_month": stats.monthly_savings(session, year=today.year, month=today.month),
         "yearly_totals": stats.yearly_totals(session),
         "recurring_items": recurring.detect_recurring(session)[:6],
         "current_month_label": today.strftime("%m/%Y"),

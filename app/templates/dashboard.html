@@ -14,9 +14,12 @@
       </span>
       <p class="text-xs text-muted font-semibold uppercase tracking-wide">{{ t('Ahorro mes') }}</p>
     </div>
-    <p class="text-xl md:text-2xl font-bold" style="color: {{ 'var(--positive)' if (savings_rate_month or 0) >= 0 else 'var(--negative)' }}">
-      {% if savings_rate_month is not none %}{{ savings_rate_month }}%{% else %}—{% endif %}
+    <p class="text-xl md:text-2xl font-bold" style="color: {{ 'var(--positive)' if savings_month.amount_cents >= 0 else 'var(--negative)' }}">
+      {{ savings_month.amount_cents | eur }}
     </p>
+    {% if savings_month.rate_pct is not none %}
+    <p class="text-xs text-muted mt-0.5">{{ savings_month.rate_pct }}% {{ t('de tus ingresos') }}</p>
+    {% endif %}
   </div>
 
   {% set current = cashflow[-1] if cashflow else None %}

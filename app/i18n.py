@@ -80,7 +80,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Sesión": "Session",
         # Dashboard
         "Patrimonio total": "Total net worth",
-        "Ahorro mes": "Savings rate",
+        "Ahorro mes": "Savings this month",
+        "de tus ingresos": "of your income",
         "Ingresos": "Income",
         "Gastos": "Expenses",
         "Evolución del saldo": "Balance over time",

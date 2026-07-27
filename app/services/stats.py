@@ -189,7 +189,10 @@ def top_merchants(session: Session, *, year: Optional[int] = None, month: Option
     return result[:limit]
 
 
-def savings_rate(session: Session, *, year: int, month: Optional[int] = None) -> Optional[float]:
+def monthly_savings(session: Session, *, year: int, month: Optional[int] = None) -> dict:
+    """Ahorro del periodo: importe en centimos (ingresos - gastos) y, si hubo ingresos
+    registrados, el % de esos ingresos que representa (None si no hay con que compararlo,
+    p.ej. a principio de mes antes de que llegue la nomina)."""
     txs = session.exec(
         select(Transaction).where(Transaction.transaction_type != TransactionType.transfer)
     ).all()
@@ -197,10 +200,12 @@ def savings_rate(session: Session, *, year: int, month: Optional[int] = None) ->
 
     income = sum(t.amount_cents for t in txs if t.transaction_type == TransactionType.income)
     expense = sum(abs(t.amount_cents) for t in txs if t.transaction_type == TransactionType.expense)
+    amount_cents = income - expense
 
-    if income <= 0:
-        return None
-    return round((income - expense) / income * 100, 1)
+    return {
+        "amount_cents": amount_cents,
+        "rate_pct": round(amount_cents / income * 100, 1) if income > 0 else None,
+    }
 
 
 def yearly_totals(session: Session) -> list[dict]:
