@@ -1,3 +1,13 @@
+# ---------- Etapa 1: build del CSS (Tailwind precompilado) ----------
+FROM node:20-alpine AS css
+WORKDIR /build
+COPY package.json package-lock.json* ./
+RUN npm install
+COPY tailwind.config.js tailwind.input.css ./
+COPY app/templates ./app/templates
+RUN npx tailwindcss -i ./tailwind.input.css -o ./app/static/tailwind.css --minify
+
+# ---------- Etapa 2: aplicación ----------
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -13,6 +23,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+
+# CSS recién compilado en la etapa anterior (sobrescribe el que venga en el repo)
+COPY --from=css /build/app/static/tailwind.css /app/app/static/tailwind.css
 
 RUN mkdir -p /data
 VOLUME ["/data"]

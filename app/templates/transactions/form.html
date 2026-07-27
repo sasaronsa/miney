@@ -30,7 +30,7 @@
   <div class="grid grid-cols-2 gap-4">
     <div>
       <label class="block text-sm mb-1 text-secondary">{{ t('Importe (€, positivo)') }}</label>
-      <input name="amount" required value="{{ '%.2f' % ((transaction.amount_cents | abs) / 100) if transaction else '' }}"
+      <input name="amount" required inputmode="decimal" value="{{ '%.2f' % ((transaction.amount_cents | abs) / 100) if transaction else '' }}"
              class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
     </div>
     <div>
@@ -75,7 +75,7 @@
           <option value="{{ c.id }}">{{ c.name }}</option>
           {% endfor %}
         </select>
-        <input name="split_amount" x-model="s.amount" placeholder="0,00"
+        <input name="split_amount" x-model="s.amount" placeholder="0,00" inputmode="decimal"
                class="w-24 px-3 py-2 text-sm text-right" />
         <button type="button" @click="splits.splice(i, 1)" class="p-1.5 text-sm shrink-0"
                 style="color: var(--negative)" aria-label="Quitar división">✕</button>
@@ -93,7 +93,7 @@
 
 {% if transaction %}
 <form method="post" action="/transactions/{{ transaction.id }}/delete" class="max-w-lg mt-4 flex justify-end"
-      onsubmit="return confirm('¿Eliminar este movimiento?');">
+      hx-boost="false" onsubmit="return confirm('¿Eliminar este movimiento?');">
   <button type="submit" class="text-sm font-medium" style="color: var(--negative)">{{ t('Eliminar movimiento') }}</button>
 </form>
 {% endif %}

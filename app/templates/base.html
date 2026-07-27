@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/tailwind.css" />
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -214,6 +214,16 @@
     }
     input[type="file"]::file-selector-button:hover { background: var(--accent-soft); }
 
+    /* En móvil, iOS hace zoom automático al enfocar un campo con fuente < 16px, lo que
+       descoloca el layout y hace que fechas y cuadros de texto se vean mal. Forzar 16px
+       en los controles lo evita (los type=date además necesitan altura mínima para no
+       colapsar en Safari iOS). */
+    @media (max-width: 767px) {
+      input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+      select, textarea { font-size: 16px !important; }
+      input[type="date"] { min-height: 2.75rem; }
+    }
+
     /* ---------- Tablas ---------- */
     tbody tr { transition: background .12s ease; }
     tbody tr:hover { background: var(--surface-2); }
@@ -344,7 +354,7 @@
   ("/export", "Exportar", ic_download),
 ] %}
 
-<body class="min-h-screen" x-data="{ menuOpen: false }">
+<body class="min-h-screen" x-data="{ menuOpen: false }" hx-boost="true">
   <div class="min-h-screen">
     <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 z-40 w-64 border-r overflow-hidden"
        style="background: var(--surface-1); border-color: var(--border)">
@@ -483,7 +493,7 @@
       </form>
       <nav class="flex-1 px-3 py-3 space-y-1 text-sm">
         {% for href, label, d in nav_items %}
-        <a href="{{ href }}"
+        <a href="{{ href }}" @click="menuOpen = false"
            class="nav-link flex items-center gap-3 px-3.5 py-3 {{ 'active' if request.url.path == href else '' }}">
           {{ icon(d) }}
           <span>{{ t(label) }}</span>
@@ -491,7 +501,7 @@
         {% endfor %}
       </nav>
       <div class="px-3 py-4 border-t" style="border-color: var(--border)">
-        <a href="/settings" class="nav-link flex items-center gap-3 px-3.5 py-3 text-sm {{ 'active' if request.url.path == '/settings' else '' }}">
+        <a href="/settings" @click="menuOpen = false" class="nav-link flex items-center gap-3 px-3.5 py-3 text-sm {{ 'active' if request.url.path == '/settings' else '' }}">
           {{ icon(ic_gear) }}
           <span>{{ t('Ajustes') }}</span>
         </a>
@@ -511,10 +521,15 @@
       const active = document.documentElement.classList.toggle('demo');
       localStorage.setItem('miney-demo', active ? '1' : '0');
     }
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
+    // Guardado con bandera: el <body> se re-ejecuta en cada navegación boosted de htmx,
+    // así el service worker se registra una sola vez y no se acumulan listeners.
+    if (!window.__mineyBooted) {
+      window.__mineyBooted = true;
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
     }
   </script>
   {% block scripts %}{% endblock %}

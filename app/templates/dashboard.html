@@ -125,6 +125,9 @@
 
 {% block scripts %}
 <script>
+  // IIFE: aísla las variables para que htmx pueda re-ejecutar este script en cada
+  // navegación boosted sin colisiones de `const` ya declarado.
+  (function () {
   const style = getComputedStyle(document.documentElement);
   const cssVar = (name) => style.getPropertyValue(name).trim();
 
@@ -223,5 +226,6 @@
       }
     });
   }
+  })();
 </script>
 {% endblock %}

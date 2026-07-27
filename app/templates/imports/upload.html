@@ -10,7 +10,7 @@
 </div>
 {% endif %}
 
-<form method="post" action="/imports/upload" enctype="multipart/form-data" class="surface rounded-2xl p-6 max-w-lg space-y-4">
+<form method="post" action="/imports/upload" enctype="multipart/form-data" hx-boost="false" class="surface rounded-2xl p-6 max-w-lg space-y-4">
   <div>
     <label class="block text-sm mb-1 text-secondary">{{ t('Cuenta destino') }}</label>
     <select name="account_id" required class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)">

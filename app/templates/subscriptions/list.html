@@ -54,7 +54,7 @@
         <div class="min-w-0">
           <p class="font-semibold truncate">{{ sub.name }}</p>
           {% if sub.website %}
-          <a href="{{ sub.website }}" target="_blank" rel="noopener" class="text-xs truncate block" style="color: var(--accent)">
+          <a href="{{ sub.website }}" target="_blank" rel="noopener" hx-boost="false" class="text-xs truncate block" style="color: var(--accent)">
             {{ sub.website | replace('https://','') | replace('http://','') }}
           </a>
           {% else %}
@@ -100,7 +100,7 @@
       <a href="/subscriptions/{{ sub.id }}/edit" class="font-medium" style="color: var(--accent)">{{ t('Editar') }}</a>
       <a href="/transactions?q={{ sub.match_pattern | urlencode }}" class="font-medium text-secondary">{{ t('Ver cargos') }}</a>
       <form method="post" action="/subscriptions/{{ sub.id }}/delete" class="ml-auto"
-            onsubmit="return confirm('¿Eliminar esta suscripción? (no borra los movimientos)');">
+            hx-boost="false" onsubmit="return confirm('¿Eliminar esta suscripción? (no borra los movimientos)');">
         <button type="submit" class="text-xs" style="color: var(--negative)">{{ t('Eliminar') }}</button>
       </form>
     </div>
@@ -145,6 +145,8 @@
 
 {% block scripts %}
 <script>
+  // IIFE: permite que htmx re-ejecute el script en navegaciones boosted sin colisiones.
+  (function () {
   const style = getComputedStyle(document.documentElement);
   const accent = style.getPropertyValue('--accent').trim();
   const surface = style.getPropertyValue('--surface-2').trim();
@@ -184,5 +186,6 @@
       }
     });
   });
+  })();
 </script>
 {% endblock %}

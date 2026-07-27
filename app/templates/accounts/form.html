@@ -36,7 +36,7 @@
   <div class="grid grid-cols-2 gap-4">
     <div>
       <label class="block text-sm mb-1 text-secondary">{{ t('Saldo inicial (€)') }}</label>
-      <input name="initial_balance" value="{{ '%.2f' % (account.initial_balance_cents / 100) if account else '0.00' }}"
+      <input name="initial_balance" inputmode="decimal" value="{{ '%.2f' % (account.initial_balance_cents / 100) if account else '0.00' }}"
              class="w-full rounded-lg border px-3 py-2 bg-transparent" style="border-color: var(--border)" />
     </div>
     <div>

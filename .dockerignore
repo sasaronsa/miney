@@ -9,3 +9,4 @@ __pycache__/
 .git/
 .pytest_cache/
 .claude/
+node_modules/

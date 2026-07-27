@@ -8,7 +8,7 @@
   </div>
   <div class="flex gap-2">
     <a href="/accounts/{{ account.id }}/edit" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--border)">{{ t('Editar') }}</a>
-    <form method="post" action="/accounts/{{ account.id }}/delete" onsubmit="return confirm('¿Eliminar o desactivar esta cuenta?');">
+    <form method="post" action="/accounts/{{ account.id }}/delete" hx-boost="false" onsubmit="return confirm('¿Eliminar o desactivar esta cuenta?');">
       <button type="submit" class="rounded-lg px-4 py-2 text-sm border" style="border-color: var(--status-critical); color: var(--status-critical)">{{ t('Eliminar') }}</button>
     </form>
   </div>
@@ -54,6 +54,8 @@
 
 {% block scripts %}
 <script>
+  // IIFE: permite que htmx re-ejecute el script en navegaciones boosted sin colisiones.
+  (function () {
   const style = getComputedStyle(document.documentElement);
   const cssVar = (n) => style.getPropertyValue(n).trim();
   Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
@@ -96,5 +98,6 @@
       }
     }
   });
+  })();
 </script>
 {% endblock %}

@@ -34,8 +34,8 @@
     </div>
     <div>
       <label class="block font-medium mb-1.5 text-secondary">{{ t('Precio esperado (€)') }}</label>
-      <input name="expected_amount" value="{{ '%.2f' % (prefill.expected_amount_cents / 100) if prefill.expected_amount_cents else '' }}"
-             placeholder="12.99" class="w-full px-3.5 py-2.5" />
+      <input name="expected_amount" inputmode="decimal" value="{{ '%.2f' % (prefill.expected_amount_cents / 100) if prefill.expected_amount_cents else '' }}"
+             placeholder="12,99" class="w-full px-3.5 py-2.5" />
     </div>
   </div>
 
