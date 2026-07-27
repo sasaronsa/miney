@@ -216,12 +216,29 @@
 
     /* En móvil, iOS hace zoom automático al enfocar un campo con fuente < 16px, lo que
        descoloca el layout y hace que fechas y cuadros de texto se vean mal. Forzar 16px
-       en los controles lo evita (los type=date además necesitan altura mínima para no
-       colapsar en Safari iOS). */
+       en los controles lo evita. */
     @media (max-width: 767px) {
       input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
       select, textarea { font-size: 16px !important; }
-      input[type="date"] { min-height: 2.75rem; }
+    }
+
+    /* iOS: el input type=date renderiza con una altura/icono de calendario distintos
+       (más grandes) cuando la app está instalada en pantalla de inicio (modo standalone)
+       que dentro de Safari, aunque el CSS sea idéntico — el control nativo no hereda el
+       mismo tamaño en ambos contextos. Fijar una altura exacta (no min-height: con
+       box-sizing:border-box no se ve afectada por el padding de cada plantilla) y limitar
+       el icono nativo iguala el resultado en los dos casos. */
+    input[type="date"] {
+      height: 2.75rem;
+      line-height: 1.2;
+    }
+    input[type="date"]::-webkit-date-and-time-value {
+      text-align: left;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      padding: 0;
+      margin-left: 0.4rem;
+      font-size: 1rem;
     }
 
     /* ---------- Tablas ---------- */
