@@ -201,38 +201,31 @@ def insert_transactions(
             description=row.description,
         )
 
-        # Transferencia interna confirmada por el usuario: se representa como un
-        # unico movimiento negativo con transfer_account_id (el modelo de la app).
+        # Transferencia interna confirmada por el usuario: se guardan las DOS patas
+        # (una por cuenta, enlazadas por transfer_account_id) para que el traspaso
+        # aparezca en el listado de movimientos de ambas cuentas, no solo en una.
         if row.row_index in transfer_row_indices:
             match = _pop_transfer_match(transfer_index, row)
             if match:
-                if row.amount_cents < 0:
-                    # Esta fila es el cargo de origen; el abono ya existente en la
-                    # otra cuenta sobra (la contabilidad de destino la aporta el enlace).
-                    session.add(
-                        Transaction(
-                            date=row.tx_date,
-                            amount_cents=row.amount_cents,
-                            description=row.description,
-                            account_id=account_id,
-                            transfer_account_id=match.account_id,
-                            transaction_type=TransactionType.transfer,
-                            external_id=row.external_id,
-                            content_hash=content_hash,
-                            source=source,
-                            import_batch_id=batch.id,
-                        )
+                session.add(
+                    Transaction(
+                        date=row.tx_date,
+                        amount_cents=row.amount_cents,
+                        description=row.description,
+                        account_id=account_id,
+                        transfer_account_id=match.account_id,
+                        transaction_type=TransactionType.transfer,
+                        external_id=row.external_id,
+                        content_hash=content_hash,
+                        source=source,
+                        import_batch_id=batch.id,
                     )
-                    inserted += 1
-                    if match.amount_cents > 0:
-                        session.delete(match)
-                else:
-                    # Esta fila es el abono de destino; convertimos el cargo ya
-                    # existente en transferencia y no insertamos el abono.
-                    match.transaction_type = TransactionType.transfer
-                    match.transfer_account_id = account_id
-                    match.category_id = None
-                    session.add(match)
+                )
+                inserted += 1
+                match.transaction_type = TransactionType.transfer
+                match.transfer_account_id = account_id
+                match.category_id = None
+                session.add(match)
                 continue
 
         transaction_type = TransactionType.income if row.amount_cents >= 0 else TransactionType.expense

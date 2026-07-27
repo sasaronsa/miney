@@ -50,7 +50,9 @@
       <p class="text-xs text-muted mt-1 truncate">
         {{ tx.date | fecha }}
         · {{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}
-        {% if tx.category_id and tx.category_id in categories_by_id %}
+        {% if tx.transaction_type.value == 'transfer' %}
+        · <span style="color: var(--accent)">🔁 {{ t('Traspaso') }}{% if tx.transfer_account_id in accounts_by_id %} · {{ accounts_by_id[tx.transfer_account_id].name }}{% endif %}</span>
+        {% elif tx.category_id and tx.category_id in categories_by_id %}
         · <span style="color: {{ categories_by_id[tx.category_id].color }}">{{ categories_by_id[tx.category_id].name }}</span>
         {% else %}
         · {{ t('Sin categorizar') }}
@@ -86,7 +88,11 @@
           <td class="py-2.5 px-4">{{ tx.description }}</td>
           <td class="py-2.5 px-4 text-secondary">{{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}</td>
           <td class="py-2.5 px-4">
-            {% if tx.category_id and tx.category_id in categories_by_id %}
+            {% if tx.transaction_type.value == 'transfer' %}
+            <span class="inline-flex items-center gap-1.5" style="color: var(--accent)">
+              🔁 {{ t('Traspaso') }}{% if tx.transfer_account_id in accounts_by_id %} · {{ accounts_by_id[tx.transfer_account_id].name }}{% endif %}
+            </span>
+            {% elif tx.category_id and tx.category_id in categories_by_id %}
             <span class="inline-flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full" style="background: {{ categories_by_id[tx.category_id].color }}"></span>
               {{ categories_by_id[tx.category_id].name }}

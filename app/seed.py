@@ -120,6 +120,9 @@ def run_seed() -> None:
             transfer_amount = round(random.uniform(100, 300), 2)
             transfer_day = date(year, month, 27)
             transfer_cents = -round(transfer_amount * 100)
+            # Un traspaso se guarda como una fila POR CUENTA (enlazadas por
+            # transfer_account_id), asi aparece en el listado de movimientos de
+            # las dos, no solo en la de origen.
             session.add(
                 Transaction(
                     date=transfer_day,
@@ -131,6 +134,20 @@ def run_seed() -> None:
                     transaction_type=TransactionType.transfer,
                     content_hash=compute_content_hash(
                         account_id=checking.id, tx_date=transfer_day, amount_cents=transfer_cents, description="Transferencia a ahorro"
+                    ),
+                )
+            )
+            session.add(
+                Transaction(
+                    date=transfer_day,
+                    amount_cents=-transfer_cents,
+                    description="Transferencia a ahorro",
+                    account_id=savings.id,
+                    transfer_account_id=checking.id,
+                    category_id=transferencias.id,
+                    transaction_type=TransactionType.transfer,
+                    content_hash=compute_content_hash(
+                        account_id=savings.id, tx_date=transfer_day, amount_cents=-transfer_cents, description="Transferencia a ahorro"
                     ),
                 )
             )

@@ -222,18 +222,24 @@
       select, textarea { font-size: 16px !important; }
     }
 
-    /* iOS: el input type=date renderiza con una altura/icono de calendario distintos
-       (más grandes) cuando la app está instalada en pantalla de inicio (modo standalone)
-       que dentro de Safari, aunque el CSS sea idéntico — el control nativo no hereda el
-       mismo tamaño en ambos contextos. Fijar una altura exacta (no min-height: con
-       box-sizing:border-box no se ve afectada por el padding de cada plantilla) y limitar
-       el icono nativo iguala el resultado en los dos casos. */
+    /* iOS/WebKit (Safari y Chrome en iOS comparten motor): un input type=date SIN valor
+       renderiza con una altura nativa interna mucho mayor que uno con fecha puesta —
+       es un bug conocido de WebKit, no depende de si la app esta instalada o no.
+       height/line-height por si solos no lo pisan del todo; hace falta ademas quitar el
+       -webkit-appearance nativo (el tap para abrir el selector de fecha se mantiene, solo
+       cambia el aspecto de la caja) y anular el padding vertical, centrando con line-height
+       igual a la altura total. */
     input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
       height: 2.75rem;
-      line-height: 1.2;
+      line-height: 2.75rem;
+      padding-top: 0;
+      padding-bottom: 0;
     }
     input[type="date"]::-webkit-date-and-time-value {
       text-align: left;
+      line-height: 2.75rem;
     }
     input[type="date"]::-webkit-calendar-picker-indicator {
       padding: 0;

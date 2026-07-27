@@ -71,6 +71,13 @@ def total_balance_series(session: Session, *, start: Optional[date] = None) -> l
 
 
 def account_balance_series(session: Session, account_id: int) -> list[dict]:
+    """Saldo dia a dia de la cuenta a partir de sus propios movimientos.
+
+    Un traspaso entre cuentas propias guarda una fila en CADA cuenta (enlazadas
+    por transfer_account_id, ver insert_transactions), asi que basta con sumar
+    los movimientos propios de esta cuenta — no hay que "importar" nada de la
+    cuenta contraria o se contaria dos veces.
+    """
     account = session.get(Account, account_id)
     if account is None:
         return []
@@ -78,18 +85,10 @@ def account_balance_series(session: Session, account_id: int) -> list[dict]:
     own_txs = session.exec(
         select(Transaction).where(Transaction.account_id == account_id).order_by(Transaction.date)
     ).all()
-    incoming_transfers = session.exec(
-        select(Transaction).where(
-            Transaction.transfer_account_id == account_id,
-            Transaction.transaction_type == TransactionType.transfer,
-        )
-    ).all()
 
     daily_delta: dict[date, int] = defaultdict(int)
     for tx in own_txs:
         daily_delta[tx.date] += tx.amount_cents
-    for tx in incoming_transfers:
-        daily_delta[tx.date] += -tx.amount_cents
 
     series = []
     running = account.initial_balance_cents

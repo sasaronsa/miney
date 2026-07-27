@@ -49,6 +49,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Gasto": "Expense",
         "Ingreso": "Income",
         "Transferencia": "Transfer",
+        "Traspaso": "Transfer",
         "Mensual": "Monthly",
         "Semanal": "Weekly",
         "Anual": "Yearly",
