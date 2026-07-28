@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import Account, Transaction
+from app.models import Account, Category, Transaction
 from app.models.enums import AccountType
 from app.services.stats import account_balance_series, current_balance
 from app.templating import templates
@@ -116,6 +116,8 @@ def account_detail(account_id: int, request: Request, session: Session = Depends
         .order_by(Transaction.date.desc(), Transaction.id.desc())
         .limit(25)
     ).all()
+    categories = session.exec(select(Category)).all()
+    accounts = session.exec(select(Account)).all()
 
     return templates.TemplateResponse(
         "accounts/detail.html",
@@ -125,5 +127,7 @@ def account_detail(account_id: int, request: Request, session: Session = Depends
             "series": series,
             "recent_txs": recent_txs,
             "balance_cents": current_balance(session, account),
+            "categories_by_id": {c.id: c for c in categories},
+            "accounts_by_id": {a.id: a for a in accounts},
         },
     )
