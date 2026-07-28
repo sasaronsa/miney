@@ -211,6 +211,8 @@ def monthly_savings(session: Session, *, year: int, month: Optional[int] = None)
     amount_cents = income - expense
 
     return {
+        "income_cents": income,
+        "expense_cents": expense,
         "amount_cents": amount_cents,
         "rate_pct": round(amount_cents / income * 100, 1) if income > 0 else None,
     }
