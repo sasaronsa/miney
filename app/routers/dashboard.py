@@ -4,10 +4,16 @@ from fastapi import APIRouter, Depends, Request
 from sqlmodel import Session
 
 from app.database import get_session
+from app.i18n import MONTHS_ES
 from app.services import recurring, stats
 from app.templating import templates
 
 router = APIRouter()
+
+
+def _add_months(d: date, delta: int) -> date:
+    total = d.year * 12 + (d.month - 1) + delta
+    return date(total // 12, total % 12 + 1, 1)
 
 
 @router.get("/")
@@ -18,6 +24,9 @@ def dashboard(request: Request, month: str = "", session: Session = Depends(get_
         selected = date(year, mon, 1)
     except (ValueError, TypeError):
         selected = date(today.year, today.month, 1)
+
+    current_month_start = date(today.year, today.month, 1)
+    next_month = _add_months(selected, 1)
 
     context = {
         "request": request,
@@ -31,7 +40,9 @@ def dashboard(request: Request, month: str = "", session: Session = Depends(get_
         "yearly_totals": stats.yearly_totals(session),
         "recurring_items": recurring.detect_recurring(session)[:6],
         "current_month_label": selected.strftime("%m/%Y"),
-        "selected_month": selected.strftime("%Y-%m"),
-        "max_month": today.strftime("%Y-%m"),
+        "month_name": MONTHS_ES[selected.month - 1],
+        "selected_year": selected.year,
+        "prev_month": _add_months(selected, -1).strftime("%Y-%m"),
+        "next_month": next_month.strftime("%Y-%m") if next_month <= current_month_start else None,
     }
     return templates.TemplateResponse("dashboard.html", context)

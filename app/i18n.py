@@ -11,6 +11,11 @@ current_language: ContextVar[str] = ContextVar("current_language", default="es")
 
 LANGUAGES = {"es": "Español", "en": "English"}
 
+MONTHS_ES = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+]
+
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         # Navegación / comunes
@@ -81,6 +86,20 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Sesión": "Session",
         # Dashboard
         "Patrimonio total": "Total net worth",
+        "Mes anterior": "Previous month",
+        "Mes siguiente": "Next month",
+        "Enero": "January",
+        "Febrero": "February",
+        "Marzo": "March",
+        "Abril": "April",
+        "Mayo": "May",
+        "Junio": "June",
+        "Julio": "July",
+        "Agosto": "August",
+        "Septiembre": "September",
+        "Octubre": "October",
+        "Noviembre": "November",
+        "Diciembre": "December",
         "Ahorro mes": "Savings this month",
         "de tus ingresos": "of your income",
         "Ingresos": "Income",

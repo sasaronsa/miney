@@ -6,10 +6,23 @@
     <p class="text-sm text-muted font-medium">{{ t('Patrimonio total') }}</p>
     <p class="text-4xl md:text-5xl font-extrabold tracking-tight gradient-text mt-1">{{ total_balance_cents | eur }}</p>
   </div>
-  <form method="get" action="/">
-    <input type="month" name="month" value="{{ selected_month }}" max="{{ max_month }}" onchange="this.form.submit()"
-           class="text-sm px-3.5 py-2.5 rounded-lg border bg-transparent" style="border-color: var(--border)" />
-  </form>
+  <div class="flex items-center gap-0.5 rounded-full border p-1" style="border-color: var(--border)">
+    <a href="/?month={{ prev_month }}" aria-label="{{ t('Mes anterior') }}"
+       class="w-8 h-8 flex items-center justify-center rounded-full transition hover:brightness-110" style="background: var(--surface-2)">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+    </a>
+    <span class="px-3 text-sm font-bold uppercase tracking-wide text-center" style="min-width: 9.5rem">{{ t(month_name) }} {{ selected_year }}</span>
+    {% if next_month %}
+    <a href="/?month={{ next_month }}" aria-label="{{ t('Mes siguiente') }}"
+       class="w-8 h-8 flex items-center justify-center rounded-full transition hover:brightness-110" style="background: var(--surface-2)">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+    </a>
+    {% else %}
+    <span class="w-8 h-8 flex items-center justify-center rounded-full opacity-30">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+    </span>
+    {% endif %}
+  </div>
 </div>
 
 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
