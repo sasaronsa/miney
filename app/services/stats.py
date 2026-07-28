@@ -46,12 +46,14 @@ def expense_allocation(
 
 
 def total_balance_series(session: Session, *, start: Optional[date] = None) -> list[dict]:
-    accounts = session.exec(select(Account)).all()
+    accounts = session.exec(select(Account).where(Account.is_active == True)).all()
     running = sum(a.initial_balance_cents for a in accounts)
+    active_ids = {a.id for a in accounts}
 
     txs = session.exec(
         select(Transaction)
         .where(Transaction.transaction_type != TransactionType.transfer)
+        .where(Transaction.account_id.in_(active_ids))
         .order_by(Transaction.date)
     ).all()
 
@@ -109,7 +111,7 @@ def total_current_balance(session: Session) -> int:
     series = total_balance_series(session)
     if series:
         return series[-1]["balance_cents"]
-    accounts = session.exec(select(Account)).all()
+    accounts = session.exec(select(Account).where(Account.is_active == True)).all()
     return sum(a.initial_balance_cents for a in accounts)
 
 
