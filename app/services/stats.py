@@ -46,13 +46,20 @@ def expense_allocation(
 
 
 def total_balance_series(session: Session, *, start: Optional[date] = None) -> list[dict]:
+    """Suma TODOS los movimientos (incluidos los de tipo transfer) de las cuentas activas.
+
+    Un traspaso real entre dos cuentas propias ya se cancela solo al sumar sus dos
+    patas (una negativa, una positiva) — no hace falta excluirlo. Si se excluyera,
+    un movimiento marcado como "transfer" sin su pata pareja (p.ej. creado a mano
+    sin cuenta destino) desaparecería del patrimonio total aunque el dinero
+    realmente haya salido de la cuenta.
+    """
     accounts = session.exec(select(Account).where(Account.is_active == True)).all()
     running = sum(a.initial_balance_cents for a in accounts)
     active_ids = {a.id for a in accounts}
 
     txs = session.exec(
         select(Transaction)
-        .where(Transaction.transaction_type != TransactionType.transfer)
         .where(Transaction.account_id.in_(active_ids))
         .order_by(Transaction.date)
     ).all()
