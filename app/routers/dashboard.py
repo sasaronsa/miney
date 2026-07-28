@@ -41,11 +41,7 @@ def dashboard(request: Request, month: str = "", session: Session = Depends(get_
         "recurring_items": recurring.detect_recurring(session)[:6],
         "current_month_label": selected.strftime("%m/%Y"),
         "month_name": MONTHS_ES[selected.month - 1],
-        "month_names": MONTHS_ES,
         "selected_year": selected.year,
-        "selected_month_num": selected.month,
-        "today_year": today.year,
-        "today_month": today.month,
         "prev_month": _add_months(selected, -1).strftime("%Y-%m"),
         "next_month": next_month.strftime("%Y-%m") if next_month <= current_month_start else None,
     }
