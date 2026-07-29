@@ -151,6 +151,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Sin divisiones — todo el importe cuenta en la categoría principal.": "No splits — the whole amount counts toward the main category.",
         # Traspasos entre cuentas
         "Traspaso entre tus cuentas": "Transfer between your accounts",
+        "En un traspaso la dirección la marca el signo actual del importe, no el tipo: se conserva tal cual al guardar.": "In a transfer the direction comes from the amount's current sign, not the type: it is kept as is when saving.",
+        "Un traspaso nuevo se guarda como salida de la cuenta elegida. Su pareja en la otra cuenta se vincula desde el movimiento ya existente.": "A new transfer is saved as money leaving the selected account. Link its pair in the other account from the existing transaction.",
         "Vinculado: ni este movimiento ni su pareja cuentan como gasto o ingreso.": "Linked: neither this transaction nor its pair counts as expense or income.",
         "Ver la otra pata": "View the other leg",
         "Deshacer traspaso": "Undo transfer",

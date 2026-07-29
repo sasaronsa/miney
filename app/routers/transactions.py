@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
@@ -14,6 +15,24 @@ from app.utils import parse_amount_input
 router = APIRouter(prefix="/transactions")
 
 PAGE_SIZE = 50
+
+
+def signed_amount_cents(
+    amount: str, transaction_type: TransactionType, *, previous_cents: Optional[int] = None
+) -> int:
+    """El formulario siempre envía el importe en positivo; el signo lo pone el tipo.
+
+    En un traspaso el tipo NO dice la dirección (una pata sale y la otra entra), así
+    que hay que conservar el signo que ya tenía la fila: si no, al guardar la pata de
+    salida se volvía positiva y, al deshacer el traspaso, las dos quedaban como ingreso.
+    Un traspaso nuevo creado a mano se asume salida de la cuenta elegida.
+    """
+    cents = abs(parse_amount_input(amount))
+    if transaction_type == TransactionType.income:
+        return cents
+    if transaction_type == TransactionType.expense:
+        return -cents
+    return cents if (previous_cents or 0) > 0 else -cents
 
 
 def _apply_filters(
@@ -169,11 +188,7 @@ def create_transaction(
     from app.services.importing.dedup import compute_content_hash
 
     parsed_date = date.fromisoformat(tx_date)
-    amount_cents = parse_amount_input(amount)
-    if transaction_type == TransactionType.expense:
-        amount_cents = -abs(amount_cents)
-    elif transaction_type == TransactionType.income:
-        amount_cents = abs(amount_cents)
+    amount_cents = signed_amount_cents(amount, transaction_type)
 
     content_hash = compute_content_hash(
         account_id=account_id, tx_date=parsed_date, amount_cents=amount_cents, description=description
@@ -272,11 +287,9 @@ def update_transaction(
 ):
     transaction = session.get(Transaction, transaction_id)
     if transaction:
-        amount_cents = parse_amount_input(amount)
-        if transaction_type == TransactionType.expense:
-            amount_cents = -abs(amount_cents)
-        elif transaction_type == TransactionType.income:
-            amount_cents = abs(amount_cents)
+        amount_cents = signed_amount_cents(
+            amount, transaction_type, previous_cents=transaction.amount_cents
+        )
 
         transaction.date = date.fromisoformat(tx_date)
         transaction.description = description
