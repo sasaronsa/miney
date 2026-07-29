@@ -279,6 +279,86 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
 
+    /* ---------- Botón central: menú radial (burbujas) ---------- */
+    .fab-scrim {
+      background: color-mix(in srgb, var(--surface-page) 55%, transparent);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+
+    .fab-main {
+      width: 3.5rem;
+      height: 3.5rem;
+      margin-top: -1.75rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 24px -8px var(--accent);
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    }
+    .fab-main:active { transform: scale(.93); }
+    .fab-main.is-open { box-shadow: 0 12px 32px -6px var(--accent); }
+    /* El "+" gira 135° y se convierte en una "x" al abrir */
+    .fab-main svg { transition: transform .38s cubic-bezier(.34,1.56,.64,1); }
+    .fab-main.is-open svg { transform: rotate(135deg); }
+
+    /* Con el abanico abierto los enlaces de la barra se apagan: evita que las
+       etiquetas de las burbujas exteriores choquen con sus iconos. */
+    .fab-bar > a { transition: opacity .25s ease; }
+    .fab-bar.is-dimmed > a { opacity: .15; pointer-events: none; }
+
+    /* Origen del abanico: centro del botón principal.
+       py-2.5 (.625rem) del contenedor + el -1.75rem/3.5rem del botón se cancelan. */
+    .fab-orbit { position: absolute; left: 50%; top: .625rem; width: 0; height: 0; }
+    .fab-item {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .3rem;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(.3);
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+    }
+    .fab-orbit.is-open .fab-item {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+      transition-delay: var(--d);
+    }
+    .fab-item:active .fab-bubble { transform: scale(.9); }
+    .fab-bubble {
+      width: 2.875rem;
+      height: 2.875rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-pop);
+      transition: transform .2s ease;
+    }
+    .fab-label {
+      font-size: .625rem;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      color: var(--text-secondary);
+      background: color-mix(in srgb, var(--surface-1) 90%, transparent);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      padding: .2rem .45rem;
+      border-radius: .5rem;
+    }
+
     /* ---------- Accesibilidad e interacción ---------- */
     button, select, label, a, input[type="checkbox"], input[type="file"], input[type="color"] { cursor: pointer; }
     :focus-visible {
@@ -360,6 +440,7 @@
 {% set ic_theme = "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" %}
 {% set ic_repeat = "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" %}
 {% set ic_menu = "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" %}
+{% set ic_plus = "M12 4.5v15m7.5-7.5h-15" %}
 {% set ic_gear = "M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z" %}
 {% set ic_eye_off = "M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" %}
 {% set ic_eye = "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z" %}
@@ -377,7 +458,8 @@
   ("/export", "Exportar", ic_download),
 ] %}
 
-<body class="min-h-screen" x-data="{ menuOpen: false }" hx-boost="true">
+<body class="min-h-screen" x-data="{ menuOpen: false, fabOpen: false }" hx-boost="true"
+      @keydown.escape.window="fabOpen = false; menuOpen = false">
   <div class="min-h-screen">
     <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 z-40 w-64 border-r overflow-hidden"
        style="background: var(--surface-1); border-color: var(--border)">
@@ -458,8 +540,11 @@
     </div>
   </div>
 
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 mobile-nav">
-    <div class="grid grid-cols-5 items-end text-[10px] font-medium">
+  <div x-cloak x-show="fabOpen" class="md:hidden fixed inset-0 z-40 fab-scrim" @click="fabOpen = false"
+       x-transition.opacity.duration.250ms aria-hidden="true"></div>
+
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 mobile-nav">
+    <div class="grid grid-cols-5 items-end text-[10px] font-medium fab-bar" :class="fabOpen && 'is-dimmed'">
       {% set mnav = [
         ("/", "Resumen", ic_home),
         ("/transactions", "Movim.", ic_moves),
@@ -472,12 +557,29 @@
       </a>
       {% endfor %}
 
-      <a href="/imports/new" class="flex flex-col items-center py-2.5" aria-label="Importar">
-        <span class="w-12 h-12 -mt-7 rounded-full flex items-center justify-center text-white shadow-xl"
-              style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 24px -8px var(--accent)">
-          {{ icon(ic_upload, 'w-6 h-6') }}
-        </span>
-      </a>
+      {# Menú radial: el botón central despliega el resto de acciones en burbujas #}
+      {% set fab_items = [
+        ("/imports/new", "Importar", ic_upload, "-107px", "-50px", "100ms"),
+        ("/transactions/new", "Manual", ic_plus, "-63px", "-100px", "50ms"),
+        ("/transactions/review", "Revisar", ic_check, "0px", "-118px", "0ms"),
+        ("/budgets", "Presup.", ic_pie, "63px", "-100px", "50ms"),
+        ("/categories", "Categorías", ic_tag, "107px", "-50px", "100ms"),
+      ] %}
+      <div class="relative flex flex-col items-center py-2.5">
+        <div class="fab-orbit" :class="fabOpen && 'is-open'">
+          {% for href, label, d, x, y, delay in fab_items %}
+          <a href="{{ href }}" @click="fabOpen = false" tabindex="-1" :tabindex="fabOpen ? 0 : -1"
+             class="fab-item" style="--x: {{ x }}; --y: {{ y }}; --d: {{ delay }}">
+            <span class="fab-bubble">{{ icon(d, 'w-5 h-5') }}</span>
+            <span class="fab-label">{{ t(label) }}</span>
+          </a>
+          {% endfor %}
+        </div>
+        <button type="button" @click="fabOpen = !fabOpen" class="fab-main" :class="fabOpen && 'is-open'"
+                :aria-expanded="fabOpen" aria-label="{{ t('Acciones rápidas') }}">
+          {{ icon(ic_plus, 'w-7 h-7') }}
+        </button>
+      </div>
 
       {% set mnav2 = [
         ("/subscriptions", "Subs", ic_repeat),
