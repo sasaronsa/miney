@@ -169,6 +169,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Sin reglas todavía.": "No rules yet.",
         "(automática)": "(automatic)",
         "Al asignarla se crea una regla automática: los movimientos de esta suscripción se categorizan solos.": "Assigning it creates an automatic rule: transactions from this subscription get categorized on their own.",
+        # Detalle de suscripción
+        "Cargos": "Charges",
+        "Próximo cargo": "Next charge",
+        "Movimientos vinculados": "Linked transactions",
+        "Todavía no hay movimientos vinculados a esta suscripción.": "No transactions linked to this subscription yet.",
         "Nueva regla": "New rule",
         "Prioridad": "Priority",
         "Campo": "Field",

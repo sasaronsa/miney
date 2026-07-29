@@ -10,7 +10,9 @@ from app.models.enums import SubscriptionFrequency
 from app.services import recurring
 from app.services.subscriptions import (
     all_subscription_stats,
+    matched_transactions,
     subscription_rule,
+    subscription_stats,
     sync_subscription_rule,
     untracked_recurring,
 )
@@ -130,6 +132,29 @@ def create_subscription(
     rule, applied = sync_subscription_rule(session, sub)
     session.commit()
     return RedirectResponse(url=f"/subscriptions?msg={_saved_message(rule, applied)}", status_code=303)
+
+
+@router.get("/{subscription_id}")
+def subscription_detail(subscription_id: int, request: Request, session: Session = Depends(get_session)):
+    sub = session.get(Subscription, subscription_id)
+    if not sub:
+        return RedirectResponse(url="/subscriptions", status_code=303)
+
+    accounts = session.exec(select(Account)).all()
+    categories = session.exec(select(Category)).all()
+    txs = matched_transactions(session, sub)
+
+    return templates.TemplateResponse(
+        "subscriptions/detail.html",
+        {
+            "request": request,
+            "sub": sub,
+            "stats": subscription_stats(session, sub),
+            "transactions": list(reversed(txs)),
+            "accounts_by_id": {a.id: a for a in accounts},
+            "categories_by_id": {c.id: c for c in categories},
+        },
+    )
 
 
 @router.get("/{subscription_id}/edit")
