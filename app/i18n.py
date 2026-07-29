@@ -174,6 +174,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Próximo cargo": "Next charge",
         "Movimientos vinculados": "Linked transactions",
         "Todavía no hay movimientos vinculados a esta suscripción.": "No transactions linked to this subscription yet.",
+        # Vista previa de detectadas
+        "+ Añadir como suscripción": "+ Add as subscription",
+        "Revisa los movimientos detectados antes de crear la suscripción.": "Review the detected transactions before creating the subscription.",
+        "Movimientos detectados": "Detected transactions",
+        "No se han encontrado movimientos para este patrón.": "No transactions found for this pattern.",
         "Nueva regla": "New rule",
         "Prioridad": "Priority",
         "Campo": "Field",

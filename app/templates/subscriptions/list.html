@@ -114,7 +114,8 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
   {% for r in detected %}
   <div class="surface rounded-2xl p-4 flex items-center justify-between gap-3">
-    <div class="min-w-0">
+    <a href="/subscriptions/preview?pattern={{ r.pattern | urlencode }}&name={{ r.pattern | urlencode }}&amount={{ '%.2f' % (r.last_amount_cents / 100) }}&frequency={{ r.frequency_value }}"
+       class="min-w-0">
       <p class="font-medium capitalize truncate">{{ r.description }}</p>
       <div class="flex flex-wrap items-center gap-2 mt-1.5">
         <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--accent-soft); color: var(--accent)">{{ t(r.frequency) }}</span>
@@ -124,7 +125,7 @@
         {% endif %}
       </div>
       <p class="text-xs text-muted mt-1.5">{{ r.last_amount_cents | eur }} · {{ t('último') }} {{ r.last_date | fecha }} · ×{{ r.occurrences }}</p>
-    </div>
+    </a>
     <a href="/subscriptions/new?name={{ r.pattern | urlencode }}&pattern={{ r.pattern | urlencode }}&amount={{ '%.2f' % (r.last_amount_cents / 100) }}&frequency={{ r.frequency_value }}"
        class="brand-btn rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0">{{ t('+ Añadir') }}</a>
   </div>

@@ -134,6 +134,34 @@ def create_subscription(
     return RedirectResponse(url=f"/subscriptions?msg={_saved_message(rule, applied)}", status_code=303)
 
 
+@router.get("/preview")
+def preview_detected(
+    request: Request,
+    pattern: str,
+    name: str = "",
+    amount: str = "",
+    frequency: str = "",
+    session: Session = Depends(get_session),
+):
+    accounts = session.exec(select(Account)).all()
+    categories = session.exec(select(Category)).all()
+    txs = recurring.transactions_for_pattern(session, pattern)
+
+    return templates.TemplateResponse(
+        "subscriptions/preview.html",
+        {
+            "request": request,
+            "pattern": pattern,
+            "name": name,
+            "amount": amount,
+            "frequency": frequency,
+            "transactions": list(reversed(txs)),
+            "accounts_by_id": {a.id: a for a in accounts},
+            "categories_by_id": {c.id: c for c in categories},
+        },
+    )
+
+
 @router.get("/{subscription_id}")
 def subscription_detail(subscription_id: int, request: Request, session: Session = Depends(get_session)):
     sub = session.get(Subscription, subscription_id)

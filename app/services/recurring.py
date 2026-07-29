@@ -47,6 +47,17 @@ def analyze_amounts(amounts: list[int]) -> tuple[float, str]:
     return round(change_pct, 1), label
 
 
+def transactions_for_pattern(session: Session, pattern: str) -> list[Transaction]:
+    """Movimientos cuya descripcion normalizada coincide exactamente con el patron
+    (mismo agrupamiento que usa detect_recurring), ordenados por fecha."""
+    txs = session.exec(
+        select(Transaction)
+        .where(Transaction.transaction_type == TransactionType.expense)
+        .order_by(Transaction.date)
+    ).all()
+    return [t for t in txs if normalize_description(t.description) == pattern]
+
+
 def detect_recurring(session: Session, *, min_occurrences: int = 3) -> list[dict]:
     """Detecta gastos recurrentes agrupando por descripción normalizada.
 

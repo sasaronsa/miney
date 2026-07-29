@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ name.title() if name else pattern }} · {{ t('Suscripciones') }} · {{ app_name }}{% endblock %}
+{% block content %}
+<a href="/subscriptions" class="text-sm font-medium inline-flex items-center gap-1 mb-4" style="color: var(--accent)">← {{ t('Suscripciones') }}</a>
+
+<div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+  <div class="min-w-0">
+    <h1 class="text-2xl font-bold truncate">{{ name.title() if name else pattern }}</h1>
+    <p class="text-xs text-muted truncate">"{{ pattern }}"</p>
+  </div>
+  <a href="/subscriptions/new?name={{ name | urlencode }}&pattern={{ pattern | urlencode }}&amount={{ amount | urlencode }}&frequency={{ frequency | urlencode }}"
+     class="brand-btn rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap">{{ t('+ Añadir como suscripción') }}</a>
+</div>
+<p class="text-secondary text-sm mb-6">{{ t('Revisa los movimientos detectados antes de crear la suscripción.') }}</p>
+
+<h2 class="text-lg font-bold mb-3">{{ t('Movimientos detectados') }}</h2>
+
+{% if transactions %}
+{% include "partials/transaction_rows.html" %}
+{% else %}
+<div class="surface rounded-2xl p-8 text-center text-secondary text-sm">
+  {{ t('No se han encontrado movimientos para este patrón.') }}
+</div>
+{% endif %}
+{% endblock %}

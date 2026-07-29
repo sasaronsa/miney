@@ -50,69 +50,7 @@
 <h2 class="text-lg font-bold mb-3">{{ t('Movimientos vinculados') }}</h2>
 
 {% if transactions %}
-<div class="md:hidden space-y-2.5">
-  {% for tx in transactions %}
-  <a href="/transactions/{{ tx.id }}/edit" class="surface rounded-2xl p-4 flex items-center justify-between gap-3">
-    <div class="min-w-0">
-      <p class="font-medium truncate">{{ tx.description }}</p>
-      <p class="text-xs text-muted mt-1 truncate">
-        {{ tx.date | fecha }}
-        · {{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}
-        {% if tx.category_id and tx.category_id in categories_by_id %}
-        · <span style="color: {{ categories_by_id[tx.category_id].color }}">{{ categories_by_id[tx.category_id].name }}</span>
-        {% else %}
-        · {{ t('Sin categorizar') }}
-        {% endif %}
-      </p>
-    </div>
-    <span class="font-semibold whitespace-nowrap shrink-0" style="color: {{ 'var(--negative)' if tx.amount_cents < 0 else 'var(--positive)' }}">
-      {{ tx.amount_cents | eur }}
-    </span>
-  </a>
-  {% endfor %}
-</div>
-
-<div class="surface rounded-2xl overflow-hidden hidden md:block">
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="text-left text-muted border-b" style="border-color: var(--border)">
-          <th class="py-3 px-4">{{ t('Fecha') }}</th>
-          <th class="py-3 px-4">{{ t('Descripción') }}</th>
-          <th class="py-3 px-4">{{ t('Cuenta') }}</th>
-          <th class="py-3 px-4">{{ t('Categoría') }}</th>
-          <th class="py-3 px-4 text-right">{{ t('Importe') }}</th>
-          <th class="py-3 px-4"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for tx in transactions %}
-        <tr class="border-b" style="border-color: var(--border)">
-          <td class="py-2.5 px-4 whitespace-nowrap">{{ tx.date | fecha }}</td>
-          <td class="py-2.5 px-4">{{ tx.description }}</td>
-          <td class="py-2.5 px-4 text-secondary">{{ accounts_by_id[tx.account_id].name if tx.account_id in accounts_by_id else '—' }}</td>
-          <td class="py-2.5 px-4">
-            {% if tx.category_id and tx.category_id in categories_by_id %}
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full" style="background: {{ categories_by_id[tx.category_id].color }}"></span>
-              {{ categories_by_id[tx.category_id].name }}
-            </span>
-            {% else %}
-            <span class="text-muted">{{ t('Sin categorizar') }}</span>
-            {% endif %}
-          </td>
-          <td class="py-2.5 px-4 text-right font-medium" style="color: {{ 'var(--negative)' if tx.amount_cents < 0 else 'var(--positive)' }}">
-            {{ tx.amount_cents | eur }}
-          </td>
-          <td class="py-2.5 px-4 text-right whitespace-nowrap">
-            <a href="/transactions/{{ tx.id }}/edit" class="text-xs font-medium" style="color: var(--brand)">{{ t('Editar') }}</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% include "partials/transaction_rows.html" %}
 {% else %}
 <div class="surface rounded-2xl p-8 text-center text-secondary text-sm">
   {{ t('Todavía no hay movimientos vinculados a esta suscripción.') }}
