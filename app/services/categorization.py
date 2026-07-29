@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlmodel import Session, select
 
-from app.models import Rule
+from app.models import Rule, Transaction
 from app.models.enums import MatchField, MatchType
 
 
@@ -19,6 +19,18 @@ def suggest_category(
         if rule_matches(rule, description=description, amount_cents=amount_cents, account_id=account_id):
             return rule.category_id
     return None
+
+
+def apply_rule_to_uncategorized(session: Session, rule: Rule) -> int:
+    """Aplica la regla a los movimientos que aun no tienen categoria. No pisa categorias ya puestas."""
+    txs = session.exec(select(Transaction).where(Transaction.category_id.is_(None))).all()
+    applied = 0
+    for tx in txs:
+        if rule_matches(rule, description=tx.description, amount_cents=tx.amount_cents, account_id=tx.account_id):
+            tx.category_id = rule.category_id
+            session.add(tx)
+            applied += 1
+    return applied
 
 
 def rule_matches(rule: Rule, *, description: str, amount_cents: int, account_id: int) -> bool:

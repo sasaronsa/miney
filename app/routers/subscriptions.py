@@ -8,7 +8,12 @@ from app.database import get_session
 from app.models import Account, Category, Subscription
 from app.models.enums import SubscriptionFrequency
 from app.services import recurring
-from app.services.subscriptions import all_subscription_stats, untracked_recurring
+from app.services.subscriptions import (
+    all_subscription_stats,
+    subscription_rule,
+    sync_subscription_rule,
+    untracked_recurring,
+)
 from app.templating import templates
 from app.utils import parse_amount_input
 
@@ -91,6 +96,17 @@ def _apply_form(
     sub.notes = notes.strip() or None
 
 
+def _saved_message(rule, applied: int) -> str:
+    msg = "Suscripción guardada"
+    if rule is None:
+        return msg
+    msg += f" · regla automática «{rule.name}»"
+    if applied:
+        plural = "movimiento" if applied == 1 else "movimientos"
+        msg += f", aplicada a {applied} {plural} sin categoría"
+    return msg
+
+
 @router.post("/new")
 def create_subscription(
     name: str = Form(...),
@@ -109,7 +125,11 @@ def create_subscription(
     _apply_form(sub, name, website, match_pattern, frequency, expected_amount, account_id, category_id, start_date, end_date, notes)
     session.add(sub)
     session.commit()
-    return RedirectResponse(url="/subscriptions?msg=Suscripción creada", status_code=303)
+    session.refresh(sub)
+
+    rule, applied = sync_subscription_rule(session, sub)
+    session.commit()
+    return RedirectResponse(url=f"/subscriptions?msg={_saved_message(rule, applied)}", status_code=303)
 
 
 @router.get("/{subscription_id}/edit")
@@ -138,17 +158,25 @@ def update_subscription(
     session: Session = Depends(get_session),
 ):
     sub = session.get(Subscription, subscription_id)
-    if sub:
-        _apply_form(sub, name, website, match_pattern, frequency, expected_amount, account_id, category_id, start_date, end_date, notes)
-        session.add(sub)
-        session.commit()
-    return RedirectResponse(url="/subscriptions", status_code=303)
+    if not sub:
+        return RedirectResponse(url="/subscriptions", status_code=303)
+
+    _apply_form(sub, name, website, match_pattern, frequency, expected_amount, account_id, category_id, start_date, end_date, notes)
+    session.add(sub)
+    session.commit()
+
+    rule, applied = sync_subscription_rule(session, sub)
+    session.commit()
+    return RedirectResponse(url=f"/subscriptions?msg={_saved_message(rule, applied)}", status_code=303)
 
 
 @router.post("/{subscription_id}/delete")
 def delete_subscription(subscription_id: int, session: Session = Depends(get_session)):
     sub = session.get(Subscription, subscription_id)
     if sub:
+        rule = subscription_rule(session, sub)
+        if rule:
+            session.delete(rule)
         session.delete(sub)
         session.commit()
     return RedirectResponse(url="/subscriptions", status_code=303)

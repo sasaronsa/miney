@@ -21,7 +21,11 @@
           {% for r in rules %}
           <tr class="border-b" style="border-color: var(--border)">
             <td class="py-2.5 px-4">{{ r.priority }}</td>
-            <td class="py-2.5 px-4">{{ r.name }}{% if not r.is_active %} <span class="text-muted">{{ t('(inactiva)') }}</span>{% endif %}</td>
+            <td class="py-2.5 px-4">
+              {{ r.name }}
+              {% if r.subscription_id %}<span class="text-muted text-xs">{{ t('(automática)') }}</span>{% endif %}
+              {% if not r.is_active %}<span class="text-muted">{{ t('(inactiva)') }}</span>{% endif %}
+            </td>
             <td class="py-2.5 px-4 text-secondary">{{ r.match_field.value }} {{ r.match_type.value }} "{{ r.pattern }}"</td>
             <td class="py-2.5 px-4">
               {% if r.category_id in categories_by_id %}

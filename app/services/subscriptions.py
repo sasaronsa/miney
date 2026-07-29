@@ -3,10 +3,14 @@ from statistics import median
 
 from sqlmodel import Session, select
 
-from app.models import Subscription, Transaction
-from app.models.enums import SubscriptionFrequency, TransactionType
+from app.models import Rule, Subscription, Transaction
+from app.models.enums import MatchField, MatchType, SubscriptionFrequency, TransactionType
+from app.services.categorization import apply_rule_to_uncategorized
 from app.services.importing.dedup import normalize_description
 from app.services.recurring import analyze_amounts
+
+# Las reglas nacidas de una suscripcion mandan sobre las genericas: prioridad mas baja = antes
+SUBSCRIPTION_RULE_PRIORITY = 1
 
 FREQ_DAYS = {
     SubscriptionFrequency.weekly: 7,
@@ -90,6 +94,46 @@ def subscription_stats(session: Session, sub: Subscription) -> dict:
 def all_subscription_stats(session: Session) -> list[dict]:
     subs = session.exec(select(Subscription).order_by(Subscription.name)).all()
     return [subscription_stats(session, s) for s in subs]
+
+
+def subscription_rule(session: Session, sub: Subscription) -> Rule | None:
+    return session.exec(select(Rule).where(Rule.subscription_id == sub.id)).first()
+
+
+def sync_subscription_rule(session: Session, sub: Subscription) -> tuple[Rule | None, int]:
+    """Mantiene una regla de categorizacion espejo de la suscripcion.
+
+    Con categoria asignada crea (o actualiza) la regla y la aplica a los movimientos
+    sin categorizar. Sin categoria, borra la regla que hubiera. Devuelve (regla, aplicados).
+    """
+    rule = subscription_rule(session, sub)
+    pattern = (sub.match_pattern or "").strip().lower()
+
+    if sub.category_id is None or not pattern:
+        if rule:
+            session.delete(rule)
+        return None, 0
+
+    if rule is None:
+        rule = Rule(
+            name=f"Suscripción: {sub.name}",
+            priority=SUBSCRIPTION_RULE_PRIORITY,
+            match_field=MatchField.description,
+            match_type=MatchType.contains,
+            pattern=pattern,
+            category_id=sub.category_id,
+            subscription_id=sub.id,
+        )
+    else:
+        rule.name = f"Suscripción: {sub.name}"
+        rule.match_field = MatchField.description
+        rule.match_type = MatchType.contains
+        rule.pattern = pattern
+        rule.category_id = sub.category_id
+
+    session.add(rule)
+    applied = apply_rule_to_uncategorized(session, rule) if rule.is_active else 0
+    return rule, applied
 
 
 def untracked_recurring(session: Session, detected: list[dict]) -> list[dict]:

@@ -3,9 +3,9 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import Category, Rule, Transaction
+from app.models import Category, Rule
 from app.models.enums import MatchField, MatchType
-from app.services.categorization import rule_matches
+from app.services.categorization import apply_rule_to_uncategorized
 from app.templating import templates
 
 router = APIRouter(prefix="/rules")
@@ -94,12 +94,6 @@ def apply_rule_retroactively(rule_id: int, session: Session = Depends(get_sessio
     if not rule:
         return RedirectResponse(url="/rules", status_code=303)
 
-    txs = session.exec(select(Transaction).where(Transaction.category_id.is_(None))).all()
-    applied = 0
-    for tx in txs:
-        if rule_matches(rule, description=tx.description, amount_cents=tx.amount_cents, account_id=tx.account_id):
-            tx.category_id = rule.category_id
-            session.add(tx)
-            applied += 1
+    applied = apply_rule_to_uncategorized(session, rule)
     session.commit()
     return RedirectResponse(url=f"/rules?msg=Regla aplicada a {applied} movimientos", status_code=303)

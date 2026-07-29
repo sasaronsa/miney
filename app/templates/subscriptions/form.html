@@ -69,6 +69,7 @@
         <option value="{{ c.id }}" {{ 'selected' if prefill.category_id == c.id else '' }}>{{ c.name }}</option>
         {% endfor %}
       </select>
+      <p class="text-xs text-muted mt-1">{{ t('Al asignarla se crea una regla automática: los movimientos de esta suscripción se categorizan solos.') }}</p>
     </div>
   </div>
 
