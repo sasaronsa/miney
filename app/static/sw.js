@@ -1,4 +1,4 @@
-const CACHE = "miney-v2";
+const CACHE = "miney-v3";
 
 // Rutas de activos estáticos: CSS, JS, iconos, manifest. Se sirven cache-first.
 const STATIC_PREFIXES = ["/static/"];

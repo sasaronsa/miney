@@ -20,6 +20,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="{{ app_name }}" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,8 +465,7 @@
     <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 z-40 w-64 border-r overflow-hidden"
        style="background: var(--surface-1); border-color: var(--border)">
       <div class="px-5 py-6 flex items-center gap-3">
-        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-lg"
-              style="background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 20px -8px var(--accent)">M</span>
+        <img src="/static/logo.png" alt="" class="w-10 h-10 shrink-0" />
         <span class="text-lg font-bold tracking-tight">{{ app_name }}</span>
       </div>
 
@@ -505,8 +505,7 @@
       <header class="md:hidden sticky top-0 z-30 px-4 py-3 flex items-center justify-between border-b"
               style="background: color-mix(in srgb, var(--surface-1) 88%, transparent); backdrop-filter: blur(14px); border-color: var(--border); padding-top: calc(0.75rem + env(safe-area-inset-top))">
         <div class="flex items-center gap-2.5">
-          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-extrabold"
-                style="background: linear-gradient(135deg, var(--accent), var(--accent-2))">M</span>
+          <img src="/static/logo.png" alt="" class="w-9 h-9 shrink-0" />
           <span class="font-bold tracking-tight">{{ app_name }}</span>
         </div>
         <div class="flex items-center gap-1">
