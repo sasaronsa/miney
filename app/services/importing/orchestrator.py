@@ -207,23 +207,25 @@ def insert_transactions(
         if row.row_index in transfer_row_indices:
             match = _pop_transfer_match(transfer_index, row)
             if match:
-                session.add(
-                    Transaction(
-                        date=row.tx_date,
-                        amount_cents=row.amount_cents,
-                        description=row.description,
-                        account_id=account_id,
-                        transfer_account_id=match.account_id,
-                        transaction_type=TransactionType.transfer,
-                        external_id=row.external_id,
-                        content_hash=content_hash,
-                        source=source,
-                        import_batch_id=batch.id,
-                    )
+                leg = Transaction(
+                    date=row.tx_date,
+                    amount_cents=row.amount_cents,
+                    description=row.description,
+                    account_id=account_id,
+                    transfer_account_id=match.account_id,
+                    transfer_transaction_id=match.id,
+                    transaction_type=TransactionType.transfer,
+                    external_id=row.external_id,
+                    content_hash=content_hash,
+                    source=source,
+                    import_batch_id=batch.id,
                 )
+                session.add(leg)
+                session.flush()  # necesita id para enlazar la pata contraria
                 inserted += 1
                 match.transaction_type = TransactionType.transfer
                 match.transfer_account_id = account_id
+                match.transfer_transaction_id = leg.id
                 match.category_id = None
                 session.add(match)
                 continue

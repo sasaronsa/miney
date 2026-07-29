@@ -92,6 +92,62 @@
 </form>
 
 {% if transaction %}
+<div class="surface rounded-2xl p-6 max-w-lg mt-4">
+  <p class="text-sm font-medium mb-1">{{ t('Traspaso entre tus cuentas') }}</p>
+
+  {% if transfer_counterpart %}
+  <p class="text-xs text-muted mb-4">{{ t('Vinculado: ni este movimiento ni su pareja cuentan como gasto o ingreso.') }}</p>
+  <div class="rounded-xl p-3.5 flex items-center justify-between gap-3 mb-4"
+       style="background: var(--accent-soft)">
+    <div class="min-w-0">
+      <p class="text-sm font-medium truncate">🔁 {{ transfer_counterpart.description }}</p>
+      <p class="text-xs text-muted mt-0.5">
+        {{ transfer_counterpart.date | fecha }}
+        · {{ accounts_by_id[transfer_counterpart.account_id].name if transfer_counterpart.account_id in accounts_by_id else '—' }}
+      </p>
+    </div>
+    <span class="text-sm font-semibold whitespace-nowrap shrink-0"
+          style="color: {{ 'var(--negative)' if transfer_counterpart.amount_cents < 0 else 'var(--positive)' }}">
+      {{ transfer_counterpart.amount_cents | eur }}
+    </span>
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/transactions/{{ transfer_counterpart.id }}/edit" class="text-sm font-medium" style="color: var(--accent)">{{ t('Ver la otra pata') }}</a>
+    <form method="post" action="/transactions/{{ transaction.id }}/unlink-transfer" hx-boost="false"
+          onsubmit="return confirm('¿Deshacer el traspaso? Los dos movimientos volverán a contar como gasto e ingreso.');">
+      <button type="submit" class="text-sm font-medium" style="color: var(--negative)">{{ t('Deshacer traspaso') }}</button>
+    </form>
+  </div>
+
+  {% elif transfer_candidates %}
+  <p class="text-xs text-muted mb-4">{{ t('Elige el movimiento de la otra cuenta que corresponde a este traspaso. Al vincularlos dejarán de contar como gasto e ingreso.') }}</p>
+  <div class="space-y-2">
+    {% for c in transfer_candidates %}
+    <form method="post" action="/transactions/{{ transaction.id }}/link-transfer" hx-boost="false">
+      <input type="hidden" name="counterpart_id" value="{{ c.id }}" />
+      <button type="submit" class="w-full rounded-xl border p-3 flex items-center justify-between gap-3 text-left"
+              style="border-color: var(--border)">
+        <span class="min-w-0">
+          <span class="text-sm font-medium truncate block">{{ c.description }}</span>
+          <span class="text-xs text-muted mt-0.5 block">
+            {{ c.date | fecha }}
+            · {{ accounts_by_id[c.account_id].name if c.account_id in accounts_by_id else '—' }}
+          </span>
+        </span>
+        <span class="text-sm font-semibold whitespace-nowrap shrink-0"
+              style="color: {{ 'var(--negative)' if c.amount_cents < 0 else 'var(--positive)' }}">
+          {{ c.amount_cents | eur }}
+        </span>
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <p class="text-xs text-muted">{{ t('No hay ningún movimiento de otra cuenta con el importe contrario en fechas cercanas para vincular.') }}</p>
+  {% endif %}
+</div>
+
 <form method="post" action="/transactions/{{ transaction.id }}/delete" class="max-w-lg mt-4 flex justify-end"
       hx-boost="false" onsubmit="return confirm('¿Eliminar este movimiento?');">
   <button type="submit" class="text-sm font-medium" style="color: var(--negative)">{{ t('Eliminar movimiento') }}</button>

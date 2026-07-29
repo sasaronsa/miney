@@ -18,6 +18,12 @@ class Transaction(SQLModel, table=True):
 
     account_id: int = Field(foreign_key="account.id", index=True)
     transfer_account_id: Optional[int] = Field(default=None, foreign_key="account.id")
+    transfer_transaction_id: Optional[int] = Field(
+        default=None,
+        foreign_key="transaction.id",
+        index=True,
+        description="La otra pata del traspaso. Enlace exacto: transfer_account_id solo dice la cuenta",
+    )
     category_id: Optional[int] = Field(default=None, foreign_key="category.id", index=True)
 
     transaction_type: TransactionType = Field(default=TransactionType.expense, index=True)

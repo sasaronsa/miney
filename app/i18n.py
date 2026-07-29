@@ -149,6 +149,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Reparte el cargo entre categorías. La parte sin repartir se queda en la categoría principal.": "Split the charge across categories. The unallocated part stays in the main category.",
         "— Categoría —": "— Category —",
         "Sin divisiones — todo el importe cuenta en la categoría principal.": "No splits — the whole amount counts toward the main category.",
+        # Traspasos entre cuentas
+        "Traspaso entre tus cuentas": "Transfer between your accounts",
+        "Vinculado: ni este movimiento ni su pareja cuentan como gasto o ingreso.": "Linked: neither this transaction nor its pair counts as expense or income.",
+        "Ver la otra pata": "View the other leg",
+        "Deshacer traspaso": "Undo transfer",
+        "Elige el movimiento de la otra cuenta que corresponde a este traspaso. Al vincularlos dejarán de contar como gasto e ingreso.": "Pick the transaction from the other account matching this transfer. Linking them stops both from counting as expense and income.",
+        "No hay ningún movimiento de otra cuenta con el importe contrario en fechas cercanas para vincular.": "No transaction from another account with the opposite amount on nearby dates to link.",
         # Revisión rápida
         "movimientos sin categorizar. Selecciona varios y asígnales una categoría de una vez, o cambia cada uno individualmente.": "uncategorized transactions. Select several and assign them a category at once, or change each one individually.",
         "Asignar categoría a seleccionados…": "Assign category to selected…",

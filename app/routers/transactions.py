@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models import Account, Category, Transaction, TransactionSplit
 from app.models.enums import TransactionType
+from app.services import transfers
 from app.templating import templates
 from app.utils import parse_amount_input
 
@@ -106,9 +107,13 @@ def list_transactions(
 
 @router.get("/review")
 def review_uncategorized(request: Request, session: Session = Depends(get_session)):
+    # Los traspasos no son ni gasto ni ingreso: no hay categoría que asignarles.
     transactions = session.exec(
         select(Transaction)
-        .where(Transaction.category_id.is_(None))
+        .where(
+            Transaction.category_id.is_(None),
+            Transaction.transaction_type != TransactionType.transfer,
+        )
         .order_by(Transaction.date.desc())
     ).all()
     accounts = {a.id: a for a in session.exec(select(Account)).all()}
@@ -211,7 +216,43 @@ def edit_transaction_form(transaction_id: int, request: Request, session: Sessio
             "accounts": accounts,
             "categories": categories,
             "splits_data": splits_data,
+            "accounts_by_id": {a.id: a for a in accounts},
+            "transfer_counterpart": transfers.counterpart(session, transaction) if transaction else None,
+            "transfer_candidates": (
+                transfers.candidates(session, transaction)
+                if transaction and transaction.transfer_transaction_id is None
+                else []
+            ),
         },
+    )
+
+
+@router.post("/{transaction_id}/link-transfer")
+def link_transfer(
+    transaction_id: int,
+    counterpart_id: int = Form(...),
+    session: Session = Depends(get_session),
+):
+    tx = session.get(Transaction, transaction_id)
+    other = session.get(Transaction, counterpart_id)
+    if not tx or not other or tx.id == other.id or tx.account_id == other.account_id:
+        return RedirectResponse(url=f"/transactions/{transaction_id}/edit", status_code=303)
+
+    transfers.link(session, tx, other)
+    session.commit()
+    return RedirectResponse(
+        url=f"/transactions/{transaction_id}/edit?msg=Vinculados como traspaso", status_code=303
+    )
+
+
+@router.post("/{transaction_id}/unlink-transfer")
+def unlink_transfer(transaction_id: int, session: Session = Depends(get_session)):
+    tx = session.get(Transaction, transaction_id)
+    if tx:
+        transfers.unlink(session, tx)
+        session.commit()
+    return RedirectResponse(
+        url=f"/transactions/{transaction_id}/edit?msg=Traspaso deshecho", status_code=303
     )
 
 
@@ -242,8 +283,15 @@ def update_transaction(
         transaction.amount_cents = amount_cents
         transaction.account_id = account_id
         transaction.category_id = int(category_id) if category_id else None
-        transaction.transaction_type = transaction_type
         transaction.notes = notes or None
+
+        # Sacar del tipo "transferencia" una pata vinculada deshace el traspaso entero:
+        # dejar la otra pata marcada como traspaso sin pareja falsearia los totales.
+        if transaction.transfer_transaction_id is not None and transaction_type != TransactionType.transfer:
+            transfers.unlink(session, transaction)
+            transaction.transaction_type = transaction_type
+        else:
+            transaction.transaction_type = transaction_type
         session.add(transaction)
 
         old_splits = session.exec(
