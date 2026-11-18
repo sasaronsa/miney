@@ -1,0 +1,29 @@
+# Compose para Coolify (x86_64). Sin ports, container_name ni cloudflared: Coolify
+# enruta vía su proxy al puerto expuesto (8000). Define las variables en la UI de Coolify.
+services:
+  miney:
+    build: .
+    expose:
+      - "8000"
+    environment:
+      DATABASE_URL: sqlite:////data/miney.db
+      DATA_DIR: /data
+      UPLOAD_DIR: /data/uploads
+      APP_USERNAME: ${APP_USERNAME:-}
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      APP_NAME: ${APP_NAME:-Miney}
+      DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-EUR}
+      SECRET_KEY: ${SECRET_KEY:-}
+      APP_PASSWORD_HASH_B64: ${APP_PASSWORD_HASH_B64:-}
+    volumes:
+      - miney_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  miney_data:
